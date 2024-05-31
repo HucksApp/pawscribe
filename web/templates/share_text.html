@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Text - Pawscribe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/css/css.min.js"></script>
+</head>
+<body>
+    <h1>Share Text</h1>
+    <form id="shareTextForm" method="post">
+        <p>{{ form.hidden_tag() }}</p>
+        <p>{{ form.content.label }}</p>
+        <textarea id="codeEditor" name="content">{{ form.content.data }}</textarea>
+        <p>{{ form.file_type.label }}</p>
+        <p>{{ form.file_type }}</p>
+        <p>{{ form.share_option.label }}</p>
+        <p>{{ form.share_option }}</p>
+        <p>{{ form.sharing_key.label }}</p>
+        <p>{{ form.sharing_key }}</p>
+        <p>{{ form.submit() }}</p>
+    </form>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+                lineNumbers: true,
+                mode: "python", // Default mode
+                theme: "default"
+            });
+
+            document.querySelector('select[name="file_type"]').addEventListener('change', function() {
+                var mode = "python"; // Default mode
+                switch (this.value) {
+                    case 'py': mode = "python"; break;
+                    case 'js': mode = "javascript"; break;
+                    case 'c': mode = "text/x-csrc"; break;
+                    case 'html': mode = "xml"; break;
+                    case 'css': mode = "css"; break;
+                }
+                editor.setOption("mode", mode);
+            });
+        });
+    </script>
+</body>
+</html>

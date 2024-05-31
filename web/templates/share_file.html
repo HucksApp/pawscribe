@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared File - Pawscribe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
+</head>
+<body>
+    <h1>Shared File: {{ file.filename }}</h1>
+    <p>{{ file.content }}</p>
+    {% if file.sharing_key %}
+    <form method="post">
+        <input type="text" name="sharing_key" placeholder="Enter sharing key">
+        <button type="submit">Access</button>
+    {% endif %}
+    </form>
+</body>
+</html>
