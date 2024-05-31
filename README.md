@@ -64,41 +64,10 @@ Pawscribe/
 Setup and Installation
 Clone the Repository
 
-bash
-Copy code
 git clone https://github.com/yourusername/Pawscribe.git
 cd Pawscribe
-Create a Virtual Environment
 
-bash
-Copy code
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-Install Dependencies
 
-bash
-Copy code
-pip install -r requirements.txt
-Set Up the Environment Variables
-Create a .env file and add the following configurations:
-
-env
-Copy code
-SECRET_KEY=your_secret_key
-SQLALCHEMY_DATABASE_URI=mysql+pymysql://username:password@localhost/db_name
-JWT_SECRET_KEY=your_jwt_secret_key
-Run Database Migrations
-
-bash
-Copy code
-flask db init
-flask db migrate
-flask db upgrade
-Run the Application
-
-bash
-Copy code
-flask run
 Usage
 Authentication
 Register a new user at /register
