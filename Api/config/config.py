@@ -9,7 +9,7 @@ load_dotenv()
 #    os.makedirs(UPLOAD_FOLDER)
 
 class Config:
-    if os.getenv("DB_TYPE") == 'mysql':
+    if os.getenv("DB_TYP") == "mysql":
         SQLALCHEMY_DATABASE_URI ="mysql+mysqlconnector://{}:{}@{}/{}".format(
             os.getenv("DB_USER"),
             os.getenv("DB_PASSWORD"),
@@ -24,3 +24,5 @@ class Config:
     JWT_COOKIE_SECURE = False
     #UPLOAD_PATH = UPLOAD_FOLDER
     MAX_CONTENT_LENGTH = 1024 * 1024
+
+print(Config.SQLALCHEMY_DATABASE_URI)

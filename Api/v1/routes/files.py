@@ -1,13 +1,10 @@
-import os
-from flask import Blueprint, request, jsonify, send_from_directory, send_file
+from flask import Blueprint, request, jsonify, send_file
 from db.models.file import File
 from Api.__init__ import db, socketio
-from Api.v1.utils.required import token_required
-from Api.v1.utils.allowed import allowed_file
-from Api.v1.utils.unique import unique_rename
+from ..utils.required import token_required
+from ..utils.allowed import allowed_file
+from ..utils.unique import unique_name
 from db import db
-from werkzeug.utils import secure_filename, safe_join
-from Api.config.config import Config
 from secrets import token_urlsafe
 from io import BytesIO
 #from . import app  as files
@@ -34,17 +31,12 @@ def uploadfile(current_user):
         msg.update({'message': "No selected file"})
         return jsonify(msg), 400
     if file and allowed_file(file.filename, msg):
-
         file_data = file.read()
         file_hash = File.generate_bin_hash(file_data)
         existing_file = File.query.filter_by(hash=file_hash).first()
         if existing_file:
             msg.update({'message': 'File already exists', 'file_id': existing_file.id})
             return jsonify(msg), 409
-        #unique_rename(file)
-        #filename = secure_filename(file.filename) 
-        #filepath = os.path.join(Config.UPLOAD_PATH, filename)
-        #file.save(filepath)
         new_file = File(filename=file.filename, data=file_data, owner_id=current_user.id)
         db.session.add(new_file)
         db.session.commit()
@@ -83,7 +75,6 @@ def delete_file(current_user, file_id):
         return jsonify(msg), 403
     db.session.delete(file)
     db.session.commit()
-   # os.remove(os.path.join(Config.UPLOAD_PATH, file.filename))
     msg.update({'message': 'File deleted', "valid": True, "file_id": file.id})
     return jsonify(msg), 200
 
@@ -95,24 +86,64 @@ def download_file(current_user, file_id):
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    
-    return send_file(BytesIO(file.data), download_name=file.filename, as_attachment=True)
-    #return send_from_directory(Config.UPLOAD_PATH, file.filename, as_attachment=True)
+    return send_file(BytesIO(file.data), download_name=file.filename, as_attachment=False)
 
-@files_bp.route('/share/<int:file_id>', methods=['POST'])
+@files_bp.route('/edit/<int:file_id>', methods=['GET'])
+@token_required
+def edit_file(current_user, file_id):
+    msg = {"message": "", "valid": False}
+    file:File  = File.query.get_or_404(file_id)
+    if file:
+        if current_user.id != file.owner_id:
+            msg.update({'message': 'Permission denied'})
+            return jsonify(msg), 403
+        content = BytesIO(file.data).read().decode("utf-8")
+        file_info = file.to_dict()
+        msg.update({**file_info, 'message': 'success', "content":content, "valid": True})
+        return jsonify(msg), 200
+    msg.update({"message": "File not found"})
+    return jsonify(msg), 404
+
+
+
+@files_bp.route('/save', methods=['POST'])
+@token_required
+def handle_save_file(current_user,data):
+    msg = {"message": "", "valid": False}
+    data = request.get_json()
+    content = data.get('content')
+    file_name = data.get('file_name', 'Doc') 
+    file_id = data.get('file_id') if 'file_id' in data else None
+    file_hash = File.generate_text_hash(content)
+    existing_file = File.query.filter_by(hash=file_hash).first()
+    if existing_file:
+        msg.update({'message': 'File already exists', 'file_id': existing_file.id})
+        return jsonify(msg), 409
+    if file_id:
+        file:File  = File.query.get_or_404(file_id)
+        if file :
+            if file.owner_id != current_user.id:
+                msg.update({'message': 'Permission denied'})
+                return jsonify(msg), 403
+            file.data = content
+    else:
+        file_name = unique_name(filename=file_name)
+        new_file = File(filename=file_name, data=content, owner_id=current_user.id)
+        db.session.add(new_file)
+    db.session.commit()
+    msg.update({'message': 'File saved', 'valid':True, "file_id": new_file.id})
+    return jsonify(msg), 200
+
+@files_bp.route('/share/<int:file_id>', methods=['GET'])
 @token_required
 def share_file(current_user, file_id):
     msg = {"message": "", "valid": False}
-    data = request.get_json()
     file = File.query.get_or_404(file_id)
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    file.private = data.get('private', False)
     if file.private:
         key = token_urlsafe(8)
-        #key = generate_key()
-        #encrypt key before storage to add security
         file.shared_with_key = key
         msg.update({"shared_with_key": key })
     else:
@@ -121,17 +152,23 @@ def share_file(current_user, file_id):
     msg.update({"message": "File Shared", "valid": True, "file_id": file.id })
     return jsonify(msg), 200
 
-@files_bp.route('/shared/<int:file_id>', methods=['GET'])
-def get_shared_file(file_id):
+
+@files_bp.route('/private/<int:file_id>', methods=['GET'])
+@token_required
+def private_file(current_user, file_id):
     msg = {"message": "", "valid": False}
-    shared_with_key = request.args.get('key')
     file = File.query.get_or_404(file_id)
-    if file.private and file.shared_with_key != shared_with_key:
+    print(file.private, '111')
+    if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    return send_file(BytesIO(file.data), download_name=file.filename)
-    #return send_from_directory(Config.UPLOAD_PATH, file.filename)
-
-
-
+    if file.private:
+        file.private = False
+        file.shared_with_key = None
+    else:
+        file.private = True
+    print(file.private, '222')
+    db.session.commit()
+    msg.update({"message": f"File Set To Private  is now {file.private}", "valid": True, "file_id": file.id })
+    return jsonify(msg), 200
 

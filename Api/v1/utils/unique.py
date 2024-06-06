@@ -8,12 +8,9 @@ def generate_key():
 
 
 
-def unique_rename(file):
-    file_name = file.filename
+def unique_name(file_type, filename=None):
     dt = str(datetime.datetime.now())
-    name_struct = os.path.splitext(file_name)
-    base_name = name_struct[0]
-    extension = name_struct[1]
+    base_name = filename if filename else 'doc'
+    extension = file_type
     new_name = base_name + '_' + dt + '_' + extension
-    file.filename = new_name
     return new_name

@@ -8,9 +8,9 @@ class User(Base, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
+    username = db.Column(db.String(128), unique=True, nullable=False)
+    email = db.Column(db.String(128), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
 
     if os.getenv("DB_TYPE") == 'mysql':
         files = db.relationship('File', backref='owner', lazy=True,  cascade='delete')
