@@ -1,0 +1,41 @@
+
+
+
+.filestat{
+    display: flex;
+    flex-direction: column;
+    font-weight: bolder;
+    font-family: 'Raleway';
+    color: #616161;
+}
+
+.filestat > .head, .filestat > .typecover{
+    display: flex;
+}
+.filestat > .head{
+    padding-top: 1%;
+}
+
+.filestat > .head div, .filestat > .typecover > div{
+    display: flex;
+    justify-content: flex-start;
+
+    padding-right: 5%;
+    padding-bottom: 1%;
+    align-items: center;
+}
+
+
+.total > *, .private > *, .public > *{
+   padding-right: 4px;
+   justify-content: center;
+   align-items: center;
+}
+
+ .span2,.div2{
+    color: #2b35af
+ }
+
+ .div1{
+    padding-left: 2px;
+ }
