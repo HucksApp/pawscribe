@@ -10,7 +10,6 @@ from flask_jwt_extended import create_access_token, set_access_cookies, unset_ac
 auth_bp = Blueprint('auth', __name__)
 
 
-# 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     msg = {'message': "", "valid": False}
@@ -29,19 +28,6 @@ def login():
     return jsonify(msg), 401
     
         
-
-# addd refresh token 
-
-#def login():
-#    data = request.get_json()
-#    username = data.get('username')
-#    password = data.get('password')
-#    user = User.query.filter_by(username=username).first()
-#    if user and user.check_password(password):
-#        login_user(user)
-#        return jsonify({"msg": "Logged in successfully"}), 200
-#    return jsonify({"error": "Invalid credentials"}), 401
-
 @auth_bp.route('/logout', methods=['POST', 'GET'])
 def logout():
     response = jsonify({"message": "Logged out successfully", "valid": True})

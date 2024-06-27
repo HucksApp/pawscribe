@@ -7,7 +7,7 @@ load_dotenv()
 #print(os.path.exists(UPLOAD_FOLDER), UPLOAD_FOLDER)
 #if not os.path.exists(UPLOAD_FOLDER):
 #    os.makedirs(UPLOAD_FOLDER)
-
+print("---", os.getenv("DB_TYP"))
 class Config:
     if os.getenv("DB_TYP") == "mysql":
         SQLALCHEMY_DATABASE_URI ="mysql+mysqlconnector://{}:{}@{}/{}".format(

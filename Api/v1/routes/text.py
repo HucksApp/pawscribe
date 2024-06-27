@@ -2,19 +2,24 @@
 from flask import Blueprint, request, jsonify
 from flask_socketio import emit, join_room, leave_room
 from Api import db, socketio
-from db.models.file import Text, File
+from db.models.file import File
+from db.models.text import Text
 from ..utils.required import token_required
 from ..utils.unique import unique_name
 from secrets import token_urlsafe
+from ..utils.allowed import allowed_file
 from io import BytesIO
-
+from datetime import datetime
+import subprocess
 text_bp = Blueprint('text', __name__, url_prefix='text')
 
 @text_bp.route('/share', methods=['POST'])
 @token_required
 def share_text(current_user):
+    
     msg = {"message": "", "valid": False}
     data = request.get_json()
+    print(data)
     text_content = data.get('text_content')
     file_type = data.get('file_type')
     private = data.get('private', True)
@@ -82,7 +87,7 @@ def delete_text(current_user, text_id):
     return jsonify(msg), 200
 
 
-@text_bp.route('/to_file', methods=['POST'])
+@text_bp.route('/to_file/<int:text_id>', methods=['POST'])
 @token_required
 def save_text_to_file(current_user, text_id):
     msg = {"message": "", "valid": False}
@@ -98,12 +103,22 @@ def save_text_to_file(current_user, text_id):
         return jsonify(msg), 403
     if not filename:
         filename = unique_name(extension, filename)
-    file = File(filename=filename, owner_id=current_user.id, data=text.content, private=text.private)
+    print(text.content)
+    if allowed_file(f'{filename}{extension}', msg):
+        file_hash = File.generate_bin_hash(text.content.encode('utf-8'))
+        existing_file = File.query.filter_by(hash=file_hash).first()
+        if existing_file:
+            print("hereeeeeeeeeeee")
+            msg.update({'message': 'File already exists', 'file_id': existing_file.id})
+            return jsonify(msg), 409
+    elif msg != "":
+        return jsonify(msg),409
+    file = File(filename=f'{filename}{extension}', owner_id=current_user.id, data=text.content.encode('utf-8'))
     text.file_id = file.id
     db.session.add(file)
     db.session.commit()
-    msg.update({'message': 'Text saved to file', 'valid': True, "file_id": file.id})
     return jsonify(msg), 200
+
     
 
 @text_bp.route('/private/<int:text_id>', methods=['GET'])
@@ -120,12 +135,41 @@ def private_text(current_user, text_id):
         text.shared_with_key = None
     else:
         text.private = True
+    text.updated_at = datetime.now()
     print(text.private, '222')
     db.session.commit()
     msg.update({"message": f"Script Set To Private is now {text.private}", "valid": True, "text_id": text.id })
     return jsonify(msg), 200
 
 
+@text_bp.route('/execute', methods=['POST'])
+@token_required
+def execute_code(current_user):
+    code = request.json.get('code')
+    language = request.json.get('language')
+    msg = {"message": "", "valid": False}
+    
+    if not code or not language:
+        msg.update({'message':'Code and language are required'})
+        return jsonify(msg), 400
+
+    if language == 'python':
+        try:
+            result = subprocess.run(['python3', '-c', code], capture_output=True, text=True, check=True)
+            output = result.stdout
+        except subprocess.CalledProcessError as e:
+            output = e.stderr
+    elif language == 'javascript':
+        try:
+            result = subprocess.run(['node', '-e', code], capture_output=True, text=True, check=True)
+            output = result.stdout
+        except subprocess.CalledProcessError as e:
+            output = e.stderr
+    else:
+        msg.update({'message':'Unsupported language'})
+        return jsonify(msg), 400
+    msg.update({'message':'successful', 'output': output, 'valid': True})
+    return jsonify(msg), 200
 
 
 @socketio.on('join')

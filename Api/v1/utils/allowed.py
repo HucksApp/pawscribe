@@ -1,6 +1,6 @@
 import os
 
-ALLOWED_EXTENSIONS = {'.txt', '.pdf', '.png', '.jpg', '.jpeg', '.gif', '.py','.ts', '.html', '.js','.svg'}
+ALLOWED_EXTENSIONS = {'.txt', '.pdf', '.png', '.jpg', '.jpeg', '.gif', '.py','.ts', '.html', '.js','.svg', '.sh'}
 
 def allowed_file(filename,message):
     extension =  os.path.splitext(filename)[1]

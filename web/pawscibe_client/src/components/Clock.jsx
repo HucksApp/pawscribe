@@ -11,17 +11,22 @@ const Clock = () => {
     return () => clearInterval(timerId); // Cleanup the interval on component unmount
   }, []);
 
-  const formatDate = (date) => {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const formatDate = date => {
+    const options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
     return date.toLocaleDateString(undefined, options);
   };
 
-  const formatTime = (date) => {
+  const formatTime = date => {
     return date.toLocaleTimeString();
   };
 
   return (
-    <div className='clock'>
+    <div className="clock">
       <div>{formatDate(currentTime)}</div>
       <div>{formatTime(currentTime)}</div>
     </div>

@@ -1,0 +1,36 @@
+
+.iconDrawerClose{
+    width: 100%;
+    text-align: end;
+}
+.listitem{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: 'Raleway';
+    
+    color: #616161;
+}
+
+.listitem > .itemtitle{
+    display:  flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.listitem > .itemtitle{
+    font-weight:  1000;
+    padding-bottom: 5%;
+}
+
+.listitem > .itemvalue{
+    font-weight:500;
+
+}
+
+.itemtext{
+    font-weight:  1000;
+    color: #616161;
+    font-family: 'Raleway';
+}

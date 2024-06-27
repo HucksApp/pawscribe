@@ -15,6 +15,8 @@ class User(Base, UserMixin):
     if os.getenv("DB_TYPE") == 'mysql':
         files = db.relationship('File', backref='owner', lazy=True,  cascade='delete')
         texts = db.relationship('Text', backref='owner', lazy=True,  cascade='delete')
+        folders = db.relationship('Folder', backref='owner', lazy=True,  cascade='delete')
+        folderfx = db.relationship('FolderFxS', backref='owner', lazy=True,  cascade='delete')
 
     #def __init__(self, email, username, password ):
     #    self.email = email

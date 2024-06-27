@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify, send_file
 from db.models.file import File
+from db.models.folder import Folder
+from db.models.folderfxs import FolderFxS
+
 from Api.__init__ import db, socketio
 from ..utils.required import token_required
 from ..utils.allowed import allowed_file
@@ -7,6 +10,7 @@ from ..utils.unique import unique_name
 from db import db
 from secrets import token_urlsafe
 from io import BytesIO
+from datetime import datetime
 #from . import app  as files
 
 files_bp = Blueprint('files', __name__, url_prefix='files')
@@ -42,6 +46,8 @@ def uploadfile(current_user):
         db.session.commit()
         msg.update({'message': 'File uploaded', 'valid':True})
         return jsonify(msg), 200
+    if msg != "": 
+        return jsonify(msg), 405 
     msg.update({"message": "File error"})
     return jsonify(msg), 400
 
@@ -167,6 +173,7 @@ def private_file(current_user, file_id):
         file.shared_with_key = None
     else:
         file.private = True
+    file.updated_at = datetime.now()
     print(file.private, '222')
     db.session.commit()
     msg.update({"message": f"File Set To Private  is now {file.private}", "valid": True, "file_id": file.id })
