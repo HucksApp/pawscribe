@@ -7,7 +7,6 @@ from datetime import datetime
 
 class Text(Base):
     __tablename__ = 'text'
-
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text(400), nullable=False)
     file_type = db.Column(db.String(20), nullable=False)

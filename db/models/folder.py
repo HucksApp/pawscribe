@@ -1,4 +1,3 @@
-import os
 from db import db
 from .base import Base
 from .user import User
@@ -12,8 +11,6 @@ class Folder(Base):
     foldername = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     owner_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
-    parent_id = db.Column(db.Integer, db.ForeignKey('Folder.id'), nullable=True)
-    parent_id = db.relationship('Folder', remote_side=[id], backref=db.backref('children', lazy='dynamic'))
 
     def __init__(self, foldername, owner_id, parent_id=None):
         self.foldername = foldername

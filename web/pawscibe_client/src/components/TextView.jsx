@@ -7,6 +7,7 @@ import {
   MenuItem,
   IconButton,
 } from '@mui/material';
+import PropTypes from 'prop-types';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import LockIcon from '@mui/icons-material/Lock';
@@ -97,7 +98,10 @@ const TextView = ({ text, setStateChange }) => {
       Notify({ message: response.data.message, type: 'success' });
       console.log(response.data);
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
     }
     setStateChange(true);
     handleMenuClose();
@@ -116,7 +120,10 @@ const TextView = ({ text, setStateChange }) => {
       Notify({ message: 'Script Saved To File', type: 'success' });
       console.log(response.data);
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
     }
     setStateChange(true);
     setOpen(false);
@@ -136,7 +143,10 @@ const TextView = ({ text, setStateChange }) => {
       });
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
     }
     setStateChange(true);
     handleMenuClose();
@@ -220,7 +230,11 @@ const TextView = ({ text, setStateChange }) => {
               <PrivateViewIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
-              <div className="menuitem">Private</div>
+              {text && text.private ? (
+                <div className="menuitem">Private</div>
+              ) : (
+                <div className="menuitem">Public</div>
+              )}
             </MenuItem>
           </Menu>
         </CardActions>
@@ -235,6 +249,11 @@ const TextView = ({ text, setStateChange }) => {
       />
     </motion.div>
   );
+};
+
+TextView.propTypes = {
+  text: PropTypes.func.isRequired,
+  setStateChange: PropTypes.func.isRequired,
 };
 
 export default TextView;

@@ -4,7 +4,6 @@ from .user import User
 from datetime import datetime
 
 
-
 class File(Base):
     __tablename__ = 'file'
     id = db.Column(db.Integer, primary_key=True)

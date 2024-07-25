@@ -14,7 +14,7 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         #try:
-        msg = {"message":"", "valid":False}
+        #msg = {"message":"", "valid":False}
         verify_jwt_in_request()
         current_user_id = get_jwt_identity()
         current_user = User.query.get(current_user_id)

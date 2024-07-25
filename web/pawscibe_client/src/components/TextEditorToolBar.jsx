@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import MenuDrawer from './MenuDrawer';
+import PropTypes from 'prop-types';
 
 const EditorToolbar = ({
   onThemeChange,
@@ -31,7 +32,7 @@ const EditorToolbar = ({
   onFontWeightChange,
   onFontSizeChange,
   onFontFamilyChange,
-  onSaveToBackend,
+  onSaveToBackend /* save to script if its just a new file script or save project folder <include> update for the fxs */,
   onSaveToFile,
   onCollaborate,
   onTogglePublic,
@@ -94,7 +95,7 @@ const EditorToolbar = ({
           <MenuDrawer />
 
           <Tooltip
-            title="Save As Script"
+            title="Project Folder"
             sx={{ marginRight: 0.5, marginLeft: 0.5 }}
           >
             <IconButton color="inherit" onClick={onSaveToBackend}>
@@ -383,6 +384,20 @@ const EditorToolbar = ({
       </AppBar>
     </motion.div>
   );
+};
+
+EditorToolbar.propTypes = {
+  onThemeChange: PropTypes.func.isRequired,
+  onLanguageChange: PropTypes.func.isRequired,
+  onFontWeightChange: PropTypes.func.isRequired,
+  onFontSizeChange: PropTypes.func.isRequired,
+  onFontFamilyChange: PropTypes.func.isRequired,
+  onSaveToBackend: PropTypes.func.isRequired,
+  onSaveToFile: PropTypes.func.isRequired,
+  onCollaborate: PropTypes.func.isRequired,
+  onTogglePublic: PropTypes.func.isRequired,
+  runCode: PropTypes.func.isRequired,
+  toggleChat: PropTypes.func.isRequired,
 };
 
 export default EditorToolbar;

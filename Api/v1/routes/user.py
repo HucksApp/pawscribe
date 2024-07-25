@@ -1,22 +1,24 @@
+import re
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from db.models.user import User 
-#from . import app as user_bp
+from db.models.user import User
 from db import db
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_access_cookies
 
+ 
 
 # Define the Blueprint for user-related routes
 user_bp = Blueprint('user', __name__)
 
 
-
 @user_bp.route('/signup', methods=['POST'])
 def signup():
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
     data = request.get_json()
     msg = {"message": "", "valid": False}
     # Validate the input data
-    if not data or not data.get('username') or not data.get('password') or not data.get('email'):
+    if not data or not data.get('username') or not data.get(
+            'password') or not data.get('email'):
         msg.update({'message': 'Missing data'})
         return jsonify(msg), 400
 
@@ -24,8 +26,15 @@ def signup():
     password = data['password']
     email = data['email']
 
+    # validate Email
+    if not (re.fullmatch(regex, email)):
+        msg.update({'message': 'Invalid Email'})
+        return jsonify(msg), 400
+
     # Check if the user already exists
-    if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+    if User.query.filter_by(
+            username=username).first() or User.query.filter_by(
+            email=email).first():
         msg.update({'message': 'User already exists'})
         return jsonify(msg), 400
     # Hash the password
@@ -36,12 +45,11 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
     token = create_access_token(identity=new_user.id)
-    msg.update({"message": "User created successfully", 
-               "valid":True, "token":token})
+    msg.update({"message": "User created successfully",
+               "valid": True, "token": token})
     response = jsonify(msg)
     set_access_cookies(response, token)
     return response, 200
-
 
 
 @user_bp.route('/user/<int:user_id>', methods=['GET'])

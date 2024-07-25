@@ -2,26 +2,23 @@ import React, { useState } from 'react';
 import MenuIcon from '@mui/icons-material/Menu';
 import IconButton from '@mui/material/IconButton';
 import Drawer from '@mui/material/Drawer';
-
 import Box from '@mui/material/Box';
-
 import ShieldIcon from '@mui/icons-material/Shield';
 import PublicIcon from '@mui/icons-material/Public';
 import ListItemIcon from '@mui/material/ListItemIcon';
-
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import axios from 'axios';
 import { Notify } from '../utils/Notification';
 import { useNavigate } from 'react-router-dom';
-
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CodeIcon from '@mui/icons-material/Code';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 
 const base = process.env.REACT_APP_BASE_API_URL;
 
@@ -37,6 +34,7 @@ const MenuDrawer = () => {
     try {
       const response = await axios.get(base + '/Api/v1/logout');
       Notify({ message: response.data.message, type: 'success' });
+      localStorage.removeItem('jwt_token');
       navigate('/');
     } catch (error) {
       Notify({ message: error.message, type: 'error' });
@@ -82,6 +80,19 @@ const MenuDrawer = () => {
               <DashboardIcon sx={{ fontSize: 30, color: '#616161' }} />
             </ListItemIcon>
             <div className="itemtext">Dashboard</div>
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem
+          key={'Folder'}
+          onClick={() => navigate('/folders')}
+          disablePadding
+        >
+          <ListItemButton>
+            <ListItemIcon>
+              <FolderOpenIcon sx={{ fontSize: 30, color: '#616161' }} />
+            </ListItemIcon>
+            <div className="itemtext">Folders</div>
           </ListItemButton>
         </ListItem>
 

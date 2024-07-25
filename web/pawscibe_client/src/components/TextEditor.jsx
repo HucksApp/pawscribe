@@ -1,12 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { Editor } from '@monaco-editor/react';
+import { Notify } from '../utils/Notification';
 import TextEditorToolBar from './TextEditorToolBar';
 import ChatDrawer from './ChatDrawer';
 import { Box } from '@mui/material';
 import axios from 'axios';
 import ConsoleDrawer from './ConsoleDrawer';
+import PropTypes from 'prop-types';
 
-const TextEditor = () => {
+const TextEditor = ({ setStateChange }) => {
   const editorRef = useRef(null);
   const [options, setOptions] = useState({
     theme: 'vs-dark',
@@ -15,6 +17,8 @@ const TextEditor = () => {
     fontWeight: 'normal',
     fontFamily: 'Raleway',
   });
+  const base = process.env.REACT_APP_BASE_API_URL;
+  const token = localStorage.getItem('jwt_token');
   const [consoleOutput, setConsoleOutput] = useState('');
   const [editorContent, setEditorContent] = useState('');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
@@ -37,8 +41,36 @@ const TextEditor = () => {
     }));
   };
 
-  const handleSaveToBackend = () => {
+  const handleSaveToBackend = async () => {
     // Implement the save to backend logic
+
+    const addText = async () => {
+      const extension = { python: '.py', bash: '.sh', javascript: '.js' };
+
+      try {
+        const response = await axios.post(
+          base + '/Api/v1/text/share',
+          {
+            text_content: editorContent,
+            file_type: extension[options.language],
+          },
+
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setStateChange(false);
+        Notify({ message: response.data.message, type: 'success' });
+      } catch (error) {
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
+      }
+    };
+    addText();
   };
 
   const handleEditorChange = value => {
@@ -46,7 +78,7 @@ const TextEditor = () => {
     console.log(editorContent);
   };
 
-  const handleSaveToFile = () => {
+  const handleSaveToFile = async () => {
     // Implement the save to file logic
   };
 
@@ -119,4 +151,7 @@ const TextEditor = () => {
   );
 };
 
+TextEditor.propTypes = {
+  setStateChange: PropTypes.func.isRequired,
+};
 export default TextEditor;

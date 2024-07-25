@@ -23,6 +23,8 @@ const App = () => {
   const [files, setFiles] = useState([]);
   const [texts, setTexts] = useState([]);
   const [editorContent, setEditorContent] = useState('');
+  const token = localStorage.getItem('jwt_token');
+  console.log(token, '======');
   return (
     <div className="App">
       <ToastContainer autoClose={5000} hideProgressBar={true} />
@@ -52,6 +54,7 @@ const App = () => {
                 setFiles={setFiles}
                 editorContent={editorContent}
                 setEditorContent={setEditorContent}
+                setStateChange={setStateChange}
               />
             }
           />

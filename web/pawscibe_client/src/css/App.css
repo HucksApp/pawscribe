@@ -12,6 +12,10 @@
   width: 10%;
 }
 
+.hidden{
+  display: none;
+}
+
 /*
 .App-logo {
   height: 40vmin;

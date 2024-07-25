@@ -24,7 +24,10 @@ const SignUp = () => {
       Notify({ message: response.data.message, type: 'success' });
       navigate('/dashboard');
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message} ${error.response.data.message}`,
+        type: 'error',
+      });
     }
   };
 

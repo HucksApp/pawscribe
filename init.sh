@@ -11,4 +11,4 @@ if (($? == 0))
 then
     echo "db pawscribe and pawscribe db_user is Now Available"
 fi &&
-bash ./install.sh; 
+bash ./install.sh;

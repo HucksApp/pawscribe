@@ -6,6 +6,10 @@ import TextView from './TextView';
 import TextStats from './TextStat';
 import AddText from './AddText';
 import { Notify } from '../utils/Notification';
+import PropTypes from 'prop-types';
+import { useLocation } from 'react-router-dom';
+import NoContent from './NoContent';
+import { useNavigate } from 'react-router-dom';
 
 const TextList = ({
   searchValue,
@@ -17,22 +21,30 @@ const TextList = ({
   const [filteredTexts, setFilteredTexts] = useState([]);
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
+  const location = useLocation();
+  const { pathname } = location;
+  const navigate = useNavigate();
+
+  if (!token) navigate('/');
+  const fetchFiles = async () => {
+    try {
+      const response = await axios.get(base + '/Api/v1/text/all', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setTexts(response.data);
+      setFilteredTexts(response.data);
+    } catch (error) {
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
+    }
+  };
 
   useEffect(() => {
-    try {
-      const fetchFiles = async () => {
-        const response = await axios.get(base + '/Api/v1/text/all', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setTexts(response.data);
-        setFilteredTexts(response.data);
-      };
-      fetchFiles();
-    } catch (error) {
-      Notify({ message: error.message, type: 'error' });
-    }
+    fetchFiles();
   }, [stateChanged]);
   useEffect(() => {
     if (searchValue) {
@@ -44,7 +56,13 @@ const TextList = ({
       setFilteredTexts(texts);
     }
   }, [searchValue]);
-
+  if (!texts.length && pathname == '/texts')
+    return (
+      <Container>
+        <NoContent msg="No Script is Present" />
+      </Container>
+    );
+  else if (!texts.length) return;
   return (
     <Container>
       {texts && <TextStats texts={filteredTexts} />}
@@ -64,6 +82,14 @@ const TextList = ({
       </Grid>
     </Container>
   );
+};
+
+TextList.propTypes = {
+  searchValue: PropTypes.func.isRequired,
+  stateChanged: PropTypes.func.isRequired,
+  setStateChange: PropTypes.func.isRequired,
+  texts: PropTypes.func.isRequired,
+  setTexts: PropTypes.func.isRequired,
 };
 
 export default TextList;

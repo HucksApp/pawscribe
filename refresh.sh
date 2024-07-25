@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 unset DB_TYP &&
 DB_INSTANCE=$(pwd)/db/DB_INSTANCE &&
 if [ -d "$DB_INSTANCE" ]; then

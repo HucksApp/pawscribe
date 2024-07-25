@@ -9,22 +9,23 @@ from datetime import datetime
 
 class FolderFxS(Base):
     __tablename__ = 'folderFxS'
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256), nullable=False)
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
     text_id = db.Column(db.Integer, db.ForeignKey(Text.id), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey(File.id), nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey(Folder.id), nullable=True)
     folder_id = db.Column(db.Integer, db.ForeignKey(Folder.id), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     
-    def __init__(self, name, type, text_id=None, file_id=None, folder_id=None):
+    def __init__(self, name, type, owner_id, text_id=None, file_id=None, folder_id=None):
         self.name = name
         self.type = type
         self.text_id = text_id
         self.file_id = file_id
         self.folder_id = folder_id
+        self.owner_id = owner_id
 
 
     def to_dict(self):

@@ -6,10 +6,11 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import UploadIcon from '@mui/icons-material/Upload';
 import '../css/add.css';
 import { Notify } from '../utils/Notification';
+import PropTypes from 'prop-types';
 
 const AddFile = ({ setStateChange }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [newFile, setNewFile] = useState({});
+  const [newFile, setNewFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
   const base = process.env.REACT_APP_BASE_API_URL;
@@ -28,31 +29,44 @@ const AddFile = ({ setStateChange }) => {
   };
 
   const handleMenuClose = () => {
+    setNewFile(null);
     setAnchorEl(null);
   };
 
   const sendUpload = e => {
-    console.log(newFile, e);
+    console.log(e);
 
-    let data = new FormData();
-    data.append('file', newFile);
+    if (newFile != null) {
+      let data = new FormData();
+      data.append('file', newFile);
 
-    try {
-      const sendFile = async () => {
-        const response = await axios.post(base + '/Api/v1/files/upload', data, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'content-type': 'multipart/form-data',
-          },
+      try {
+        const sendFile = async () => {
+          const response = await axios.post(
+            base + '/Api/v1/files/upload',
+            data,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'content-type': 'multipart/form-data',
+              },
+            }
+          );
+          Notify({ message: response.data.message, type: 'success' });
+        };
+        sendFile();
+        setStateChange(true);
+      } catch (error) {
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
         });
-        Notify({ message: response.data.message, type: 'success' });
-      };
-      sendFile();
-      setStateChange(true);
-    } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      }
+      handleMenuClose();
+    } else {
+      setNewFile(null);
+      Notify({ message: 'File Not Selected', type: 'info' });
     }
-    handleMenuClose();
   };
 
   /*const handleDelete = async () => {
@@ -98,6 +112,10 @@ const AddFile = ({ setStateChange }) => {
       </Menu>
     </div>
   );
+};
+
+AddFile.propTypes = {
+  setStateChange: PropTypes.func.isRequired,
 };
 
 export default AddFile;

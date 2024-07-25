@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, createSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import PropTypes from 'prop-types';
 import {
   CardContent,
   CardActions,
@@ -47,7 +48,10 @@ const FileView = ({ file, setStateChange }) => {
         setIframeSrc(url);
         console.log('here====', response.data);
       } catch (error) {
-        Notify({ message: error.message, type: 'error' });
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
       }
     };
 
@@ -74,7 +78,10 @@ const FileView = ({ file, setStateChange }) => {
       });
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
     }
     setStateChange(true);
     handleMenuClose();
@@ -102,7 +109,10 @@ const FileView = ({ file, setStateChange }) => {
       Notify({ message: response.data.message, type: 'success' });
       console.log(response.data);
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
     }
     setStateChange(true);
     handleMenuClose();
@@ -133,7 +143,10 @@ const FileView = ({ file, setStateChange }) => {
       );
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      Notify({
+        message: `${error.message}. ${error.response.data.message}`,
+        type: 'error',
+      });
     }
     setStateChange(true);
     if (file.private == true) setOpen(true);
@@ -204,7 +217,11 @@ const FileView = ({ file, setStateChange }) => {
               <PrivateViewIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
-              <div className="menuitem">Privacy</div>
+              {file && file.private ? (
+                <div className="menuitem">Private</div>
+              ) : (
+                <div className="menuitem">Public</div>
+              )}
             </MenuItem>
             <MenuItem onClick={handleOpen}>
               <InfoIcon
@@ -223,6 +240,11 @@ const FileView = ({ file, setStateChange }) => {
       />
     </motion.div>
   );
+};
+
+FileView.propTypes = {
+  file: PropTypes.func.isRequired,
+  setStateChange: PropTypes.func.isRequired,
 };
 
 export default FileView;
