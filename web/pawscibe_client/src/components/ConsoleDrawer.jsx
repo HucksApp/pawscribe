@@ -4,6 +4,7 @@ import React from 'react';
 import { Drawer, IconButton, Tooltip } from '@mui/material';
 import { IndeterminateCheckBox } from '@mui/icons-material';
 import Console from './Console';
+import PropTypes from 'prop-types';
 
 const ConsoleDrawer = ({ open, onClose, code, language }) => {
   return (
@@ -43,6 +44,13 @@ const ConsoleDrawer = ({ open, onClose, code, language }) => {
       </Drawer>
     </>
   );
+};
+
+ConsoleDrawer.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  code: PropTypes.string.isRequired,
+  language: PropTypes.string.isRequired,
 };
 
 export default ConsoleDrawer;

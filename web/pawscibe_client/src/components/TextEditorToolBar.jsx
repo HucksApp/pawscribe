@@ -1,5 +1,3 @@
-// src/components/Toolbar.jsx
-
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -25,6 +23,25 @@ import {
 import { motion } from 'framer-motion';
 import MenuDrawer from './MenuDrawer';
 import PropTypes from 'prop-types';
+/*import { styled } from '@mui/material/styles';
+
+const drawerWidth = 240;
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: prop => prop !== 'open',
+})(({ theme, open }) => ({
+  transition: theme.transitions.create(['margin', 'width'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    width: `calc(100% - ${drawerWidth}px)`,
+    transition: theme.transitions.create(['margin', 'width'], {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    marginLeft: drawerWidth,
+  }),
+}));*/
 
 const EditorToolbar = ({
   onThemeChange,
@@ -38,6 +55,7 @@ const EditorToolbar = ({
   onTogglePublic,
   runCode,
   toggleChat,
+  toggleDrawer,
 }) => {
   const [theme, setTheme] = useState('vs-dark');
   const [language, setLanguage] = useState('plaintext');
@@ -45,6 +63,7 @@ const EditorToolbar = ({
   const [fontSize, setFontSize] = useState(14);
   const [fontFamily, setFontFamily] = useState('Courier New');
   const [isPublic, setIsPublic] = useState(false);
+  //const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleThemeChange = event => {
     setTheme(event.target.value);
@@ -98,9 +117,14 @@ const EditorToolbar = ({
             title="Project Folder"
             sx={{ marginRight: 0.5, marginLeft: 0.5 }}
           >
-            <IconButton color="inherit" onClick={onSaveToBackend}>
-              <Folder />
-            </IconButton>
+            <Tooltip
+              title="Project Folder"
+              sx={{ marginRight: 0.5, marginLeft: 0.5 }}
+            >
+              <IconButton color="inherit" onClick={toggleDrawer}>
+                <Folder />
+              </IconButton>
+            </Tooltip>
           </Tooltip>
 
           <FormControl
@@ -193,6 +217,79 @@ const EditorToolbar = ({
               >
                 Python
               </MenuItem>
+
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="java"
+              >
+                Java
+              </MenuItem>
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="ruby"
+              >
+                Ruby
+              </MenuItem>
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="php"
+              >
+                PHP
+              </MenuItem>
+
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="c"
+              >
+                C
+              </MenuItem>
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="cpp"
+              >
+                C++
+              </MenuItem>
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="typescript"
+              >
+                Typescript
+              </MenuItem>
+              <MenuItem
+                sx={{
+                  color: '#616161',
+                  fontFamily: 'Raleway',
+                  fontWeight: 1000,
+                }}
+                value="jsx"
+              >
+                React Jsx
+              </MenuItem>
+
               <MenuItem
                 sx={{
                   color: '#616161',
@@ -398,6 +495,7 @@ EditorToolbar.propTypes = {
   onTogglePublic: PropTypes.func.isRequired,
   runCode: PropTypes.func.isRequired,
   toggleChat: PropTypes.func.isRequired,
+  toggleDrawer: PropTypes.func.isRequired,
 };
 
 export default EditorToolbar;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Menu, MenuItem, IconButton } from '@mui/material';
-import { AddBox as AddIcon } from '@mui/icons-material';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import UploadIcon from '@mui/icons-material/Upload';
 import '../css/add.css';
@@ -89,7 +89,7 @@ const AddFile = ({ setStateChange }) => {
   return (
     <div className="add">
       <IconButton onClick={handleMenuOpen}>
-        <AddIcon color="secondary" fontSize="large" />
+        <NoteAddIcon color="secondary" fontSize="large" />
       </IconButton>
       <Menu
         anchorEl={anchorEl}

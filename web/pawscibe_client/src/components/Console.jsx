@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as p5 from 'p5';
 import ConsoleEmulator from 'react-console-emulator';
-
+import PropTypes from 'prop-types';
 const Console = ({ code, language, open }) => {
   const [pyodide, setPyodide] = useState(null);
 
@@ -77,4 +77,9 @@ const Console = ({ code, language, open }) => {
   );
 };
 
+Console.propTypes = {
+  code: PropTypes.string.isRequired,
+  language: PropTypes.string.isRequired,
+  open: PropTypes.bool.isRequired,
+};
 export default Console;

@@ -14,18 +14,19 @@ class FolderFxS(Base):
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
     text_id = db.Column(db.Integer, db.ForeignKey(Text.id), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey(File.id), nullable=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey(Folder.id), nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey(Folder.id), nullable=True) # change to False
     folder_id = db.Column(db.Integer, db.ForeignKey(Folder.id), nullable=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
+    owner_id = db.Column(db.String(36), db.ForeignKey(User.id), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     
-    def __init__(self, name, type, owner_id, text_id=None, file_id=None, folder_id=None):
+    def __init__(self, name, type, owner_id,  parent_id, text_id=None, file_id=None, folder_id=None):
         self.name = name
         self.type = type
         self.text_id = text_id
         self.file_id = file_id
         self.folder_id = folder_id
         self.owner_id = owner_id
+        self.parent_id =parent_id
 
 
     def to_dict(self):
@@ -35,7 +36,7 @@ class FolderFxS(Base):
                 'text_id': self.text_id,
                 'owner_id': self.owner_id,
                 'file_id': self.file_id,
-                'folder_id': self.owner_id,
+                'folder_id': self.folder_id,
                 'added_at': self.added_at,
                 'type': self.type,
                

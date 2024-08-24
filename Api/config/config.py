@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv('JWK_SECRET_KEY')
     JWT_TOKEN_LOCATION = ['headers']
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=3)
     JWT_COOKIE_SECURE = False
     #UPLOAD_PATH = UPLOAD_FOLDER
     MAX_CONTENT_LENGTH = 1024 * 1024

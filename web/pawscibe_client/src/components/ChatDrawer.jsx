@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { Close, Send } from '@mui/icons-material';
 import io from 'socket.io-client';
+import PropTypes from 'prop-types';
 
 const socket = io.connect('http://0.0.0.0:8000'); // Adjust the URL accordingly
 
@@ -71,4 +72,8 @@ const ChatDrawer = ({ open, onClose }) => {
   );
 };
 
+ChatDrawer.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
 export default ChatDrawer;

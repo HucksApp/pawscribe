@@ -3,11 +3,12 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from .base import Base
 from flask_login import UserMixin
+import uuid
 
 class User(Base, UserMixin):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = db.Column(db.String(128), unique=True, nullable=False)
     email = db.Column(db.String(128), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
@@ -28,6 +29,12 @@ class User(Base, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'username': self.username
+        }
 
     def __repr__(self):
         return f'<User {self.username}>'

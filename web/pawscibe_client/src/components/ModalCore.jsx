@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal } from '@mui/material';
 import ToFileView from './ToFileView';
 import KeyView from './Keyview';
+import PropTypes from 'prop-types';
 
 const ModalCore = ({
   view_type,
@@ -10,8 +11,8 @@ const ModalCore = ({
   value,
   setValue,
   handleClick,
-  file,
 }) => {
+  console.log(value);
   let View;
   if (view_type === 'toFile') View = ToFileView;
   else if (view_type === 'keyView') View = KeyView;
@@ -23,11 +24,18 @@ const ModalCore = ({
           setValue={setValue}
           handleClick={handleClick}
           handleClose={handleClose}
-          file={file}
         />
       </Modal>
     </div>
   );
 };
 
+ModalCore.propTypes = {
+  view_type: PropTypes.string.isRequired,
+  open: PropTypes.bool.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  value: PropTypes.object.isRequired,
+  setValue: PropTypes.func.isRequired,
+  handleClick: PropTypes.func.isRequired,
+};
 export default ModalCore;

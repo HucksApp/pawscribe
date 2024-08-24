@@ -4,8 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from db.models.user import User
 from db import db
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_access_cookies
-
- 
+from ..utils.required import token_required
 
 # Define the Blueprint for user-related routes
 user_bp = Blueprint('user', __name__)
@@ -52,20 +51,11 @@ def signup():
     return response, 200
 
 
-@user_bp.route('/user/<int:user_id>', methods=['GET'])
-def get_user(user_id):
+@user_bp.route('/user', methods=['GET'])
+@token_required
+def get_user(current_user):
     msg = {"message": "", "valid": False}
-    user = User.query.get(user_id)
-
-    if not user:
-        msg.update({'message': 'User not found'})
-        return jsonify(msg), 404
-
-    user_data = {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-
-    }
-    msg.update({'user': user_data, "message": "<user [dict]>", "valid": True})
+    user: User = User.query.get(current_user.id)
+    msg.update({'user': user.to_dict(),
+               "message": "<user [dict]>", "valid": True})
     return jsonify(msg), 200

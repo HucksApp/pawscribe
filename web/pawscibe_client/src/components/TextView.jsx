@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-
+import { useNavigate } from 'react-router-dom';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -20,6 +20,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { motion } from 'framer-motion';
 import { Notify } from '../utils/Notification';
 import ModalCore from './ModalCore';
+import AlertDialog from './Alert';
 import '../css/fileview.css';
 
 const TextView = ({ text, setStateChange }) => {
@@ -30,6 +31,8 @@ const TextView = ({ text, setStateChange }) => {
   const [iframeSrc, setIframeSrc] = useState('');
   const [open, setOpen] = useState(false);
   const [name, setName] = useState();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const colorPallets = {
     php: '#87CEFA',
@@ -98,10 +101,16 @@ const TextView = ({ text, setStateChange }) => {
       Notify({ message: response.data.message, type: 'success' });
       console.log(response.data);
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (
+        error.response.data.msg &&
+        error.response.data.msg == 'Token has expired'
+      )
+        navigate('/');
+      else
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
     }
     setStateChange(true);
     handleMenuClose();
@@ -120,10 +129,16 @@ const TextView = ({ text, setStateChange }) => {
       Notify({ message: 'Script Saved To File', type: 'success' });
       console.log(response.data);
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (
+        error.response.data.msg &&
+        error.response.data.msg == 'Token has expired'
+      )
+        navigate('/');
+      else
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
     }
     setStateChange(true);
     setOpen(false);
@@ -136,19 +151,35 @@ const TextView = ({ text, setStateChange }) => {
     handleMenuClose();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    handleMenuClose();
+    setDialogOpen(true);
+  };
+
+  const handleNo = () => {
+    setDialogOpen(false);
+  };
+
+  const handleYes = async () => {
     try {
       const response = await axios.delete(`${base}/Api/v1/text/${text.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (
+        error.response.data.msg &&
+        error.response.data.msg == 'Token has expired'
+      )
+        navigate('/');
+      else
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
     }
     setStateChange(true);
+    setDialogOpen(false);
     handleMenuClose();
   };
 
@@ -247,12 +278,20 @@ const TextView = ({ text, setStateChange }) => {
         setValue={setName}
         handleClick={handleSaveToFile}
       />
+      <AlertDialog
+        title={'Alert'}
+        message={`Delete this ${text.file_type} script completely ?`}
+        handleYes={handleYes}
+        handleNo={handleNo}
+        open={dialogOpen}
+        handleClose={() => setDialogOpen(false)}
+      />
     </motion.div>
   );
 };
 
 TextView.propTypes = {
-  text: PropTypes.func.isRequired,
+  text: PropTypes.array.isRequired,
   setStateChange: PropTypes.func.isRequired,
 };
 

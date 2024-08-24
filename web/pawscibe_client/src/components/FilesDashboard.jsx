@@ -4,7 +4,7 @@ import FileList from './FileList';
 import Footer from './Footer';
 import PropTypes from 'prop-types';
 
-const Dashboard = ({ stateChanged, setStateChange, files, setFiles }) => {
+const Dashboard = ({ stateChanged, setStateChange }) => {
   const [searchValue, setSearchValue] = useState('');
 
   return (
@@ -14,8 +14,6 @@ const Dashboard = ({ stateChanged, setStateChange, files, setFiles }) => {
         searchValue={searchValue}
         setStateChange={setStateChange}
         stateChanged={stateChanged}
-        files={files}
-        setFiles={setFiles}
       />
       <Footer />
     </div>
@@ -23,10 +21,8 @@ const Dashboard = ({ stateChanged, setStateChange, files, setFiles }) => {
 };
 
 Dashboard.propTypes = {
-  stateChanged: PropTypes.object.isRequired,
+  stateChanged: PropTypes.bool.isRequired,
   setStateChange: PropTypes.func.isRequired,
-  files: PropTypes.object.isRequired,
-  setFiles: PropTypes.func.isRequired,
 };
 
 export default Dashboard;

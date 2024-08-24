@@ -11,6 +11,8 @@
 
 .filestat > .head, .filestat > .typecover{
     display: flex;
+    justify-content: flex-start;
+    align-items: center;
 }
 .filestat > .head{
     padding-top: 1%;
@@ -19,12 +21,15 @@
 .filestat > .head div, .filestat > .typecover > div{
     display: flex;
     justify-content: flex-start;
-
     padding-right: 5%;
     padding-bottom: 1%;
     align-items: center;
 }
-
+.filestat > .head div span{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
 .total > *, .private > *, .public > *{
    padding-right: 4px;
@@ -33,7 +38,7 @@
 }
 
  .span2,.div2{
-    color: #2b35af
+    color: #1976d2
  }
 
  .div1{

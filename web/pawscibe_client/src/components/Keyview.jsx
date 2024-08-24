@@ -2,6 +2,7 @@ import React from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { Notify } from '../utils/Notification';
 import '../css/keyView.css';
+import PropTypes from 'prop-types';
 
 const Keyview = ({ file, handleClose }) => {
   const handleCopy = () => {
@@ -25,4 +26,8 @@ const Keyview = ({ file, handleClose }) => {
   );
 };
 
+Keyview.propTypes = {
+  file: PropTypes.object.isRequired,
+  handleClose: PropTypes.func.isRequired,
+};
 export default Keyview;

@@ -3,6 +3,9 @@
     width: 100%;
     text-align: end;
 }
+.iconDrawerClose:hover{
+    cursor: pointer;
+}
 .listitem{
     display: flex;
     flex-direction: column;

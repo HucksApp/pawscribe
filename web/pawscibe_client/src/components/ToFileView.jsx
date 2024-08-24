@@ -2,6 +2,7 @@ import React from 'react';
 import { TextField } from '@mui/material';
 import '../css/tofileview.css';
 import CloseIcon from '@mui/icons-material/Close';
+import PropTypes from 'prop-types';
 const ToFileView = ({ value, setValue, handleClick, handleClose }) => {
   return (
     <div className="tofileview">
@@ -25,4 +26,10 @@ const ToFileView = ({ value, setValue, handleClick, handleClose }) => {
   );
 };
 
+ToFileView.propTypes = {
+  value: PropTypes.object.isRequired,
+  setValue: PropTypes.func.isRequired,
+  handleClick: PropTypes.func.isRequired,
+  handleClose: PropTypes.func.isRequired,
+};
 export default ToFileView;

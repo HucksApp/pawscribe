@@ -18,12 +18,17 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CodeIcon from '@mui/icons-material/Code';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import FolderIcon from '@mui/icons-material/Folder';
+//import ProjectView from './ProjectView';
+//import { clearAllWithPrefix } from '../store/cache';
+//import { useDispatch } from 'react-redux';
+//import { clearUser } from '../store/userSlice';
 
 const base = process.env.REACT_APP_BASE_API_URL;
 
 const MenuDrawer = () => {
   const [open, setOpen] = useState(false);
+  //const dispatch = useDispatch();
 
   const navigate = useNavigate();
   const toggleDrawer = newOpen => () => {
@@ -35,6 +40,9 @@ const MenuDrawer = () => {
       const response = await axios.get(base + '/Api/v1/logout');
       Notify({ message: response.data.message, type: 'success' });
       localStorage.removeItem('jwt_token');
+      //dispatch(clearUser());
+      localStorage.clear();
+      //clearAllWithPrefix('all');
       navigate('/');
     } catch (error) {
       Notify({ message: error.message, type: 'error' });
@@ -90,7 +98,7 @@ const MenuDrawer = () => {
         >
           <ListItemButton>
             <ListItemIcon>
-              <FolderOpenIcon sx={{ fontSize: 30, color: '#616161' }} />
+              <FolderIcon sx={{ fontSize: 30, color: '#616161' }} />
             </ListItemIcon>
             <div className="itemtext">Folders</div>
           </ListItemButton>

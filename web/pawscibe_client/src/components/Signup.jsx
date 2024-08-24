@@ -4,12 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { TextField } from '@mui/material';
 import { Notify } from '../utils/Notification';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../store/userSlice';
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const base = process.env.REACT_APP_BASE_API_URL;
 
   const handleSignup = async e => {
@@ -21,13 +24,20 @@ const SignUp = () => {
         email,
       });
       localStorage.setItem('jwt_token', response.data.token);
+      dispatch(setUser(response.data.user));
       Notify({ message: response.data.message, type: 'success' });
       navigate('/dashboard');
     } catch (error) {
-      Notify({
-        message: `${error.message} ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (error.response && error.response.data)
+        Notify({
+          message: `${error.message} ${error.response.data.message}`,
+          type: 'error',
+        });
+      else
+        Notify({
+          message: `${error.message}`,
+          type: 'error',
+        });
     }
   };
 

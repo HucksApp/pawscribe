@@ -10,20 +10,20 @@ import PropTypes from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import NoContent from './NoContent';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { setTexts } from '../store/textSlice';
+import SkeletonLoading from './Skeleton';
+import { clearUser } from '../store/userSlice';
 
-const TextList = ({
-  searchValue,
-  stateChanged,
-  setStateChange,
-  texts,
-  setTexts,
-}) => {
+const TextList = ({ searchValue, stateChanged, setStateChange }) => {
   const [filteredTexts, setFilteredTexts] = useState([]);
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
   const location = useLocation();
   const { pathname } = location;
   const navigate = useNavigate();
+  const texts = useSelector(state => state.texts);
+  const dispatch = useDispatch();
 
   if (!token) navigate('/');
   const fetchFiles = async () => {
@@ -33,13 +33,27 @@ const TextList = ({
           Authorization: `Bearer ${token}`,
         },
       });
-      setTexts(response.data);
+      dispatch(setTexts(response.data));
       setFilteredTexts(response.data);
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (error.response)
+        if (
+          error.response.data.msg &&
+          error.response.data.msg === 'Token has expired'
+        ) {
+          localStorage.removeItem('jwt_token');
+          dispatch(clearUser());
+          navigate('/');
+        } else
+          Notify({
+            message: `${error.message}. ${error.response.data.message} `,
+            type: 'error',
+          });
+      else
+        Notify({
+          message: `${error.message}`,
+          type: 'error',
+        });
     }
   };
 
@@ -56,40 +70,48 @@ const TextList = ({
       setFilteredTexts(texts);
     }
   }, [searchValue]);
-  if (!texts.length && pathname == '/texts')
+
+  if (!texts) return <SkeletonLoading />;
+  else if (
+    texts &&
+    Array.isArray(texts) &&
+    texts.length < 1 &&
+    pathname == '/texts'
+  )
     return (
       <Container>
+        <AddText />
         <NoContent msg="No Script is Present" />
       </Container>
     );
-  else if (!texts.length) return;
+  else if (texts && Array.isArray(texts) && texts.length < 1) return;
   return (
-    <Container>
-      {texts && <TextStats texts={filteredTexts} />}
-      <Grid container spacing={3}>
-        <AnimatePresence>
-          <AddText />
-          {filteredTexts.map(text => (
-            <Grid item key={text.id} xs={8} sm={4} md={2}>
-              <TextView
-                text={text}
-                stateChanged={stateChanged}
-                setStateChange={setStateChange}
-              />
-            </Grid>
-          ))}
-        </AnimatePresence>
-      </Grid>
-    </Container>
+    <div className="listcontainer">
+      <Container sx={{ overflow: 'scroll' }}>
+        {texts && <TextStats texts={filteredTexts} />}
+        <Grid container spacing={3}>
+          <AnimatePresence>
+            <AddText />
+            {filteredTexts.map(text => (
+              <Grid item key={text.id} xs={8} sm={4} md={2}>
+                <TextView
+                  text={text}
+                  stateChanged={stateChanged}
+                  setStateChange={setStateChange}
+                />
+              </Grid>
+            ))}
+          </AnimatePresence>
+        </Grid>
+      </Container>
+    </div>
   );
 };
 
 TextList.propTypes = {
-  searchValue: PropTypes.func.isRequired,
-  stateChanged: PropTypes.func.isRequired,
+  searchValue: PropTypes.string.isRequired,
+  stateChanged: PropTypes.bool.isRequired,
   setStateChange: PropTypes.func.isRequired,
-  texts: PropTypes.func.isRequired,
-  setTexts: PropTypes.func.isRequired,
 };
 
 export default TextList;

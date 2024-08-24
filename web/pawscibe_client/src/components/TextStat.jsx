@@ -2,18 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DescriptionIcon from '@mui/icons-material/Description';
-import ImageIcon from '@mui/icons-material/Image';
-import CodeIcon from '@mui/icons-material/Code';
-import {
-  Css,
-  Javascript,
-  Html,
-  Php,
-  Terminal,
-  Lock,
-  People,
-} from '@mui/icons-material';
+//import DescriptionIcon from '@mui/icons-material/Description';
+import codeIcon from '../utils/codeIcon';
+//import ArticleIcon from '@mui/icons-material/Article';
+import FeedIcon from '@mui/icons-material/Feed';
+import PublicIcon from '@mui/icons-material/Public';
+import PropTypes from 'prop-types';
+
+import { Terminal, Lock } from '@mui/icons-material';
 import '../css/filestat.css';
 
 const TextStats = ({ texts }) => {
@@ -24,6 +20,8 @@ const TextStats = ({ texts }) => {
     acc[extension] = (acc[extension] || 0) + 1;
     return acc;
   }, {});
+
+  console.log(fileTypes);
 
   const totalFiles = texts.length;
   const privateFiles = texts.filter(text => text.private).length;
@@ -40,7 +38,7 @@ const TextStats = ({ texts }) => {
         <div className="head">
           <div className="total">
             <span className="icon">
-              <InsertDriveFileIcon color="action" fontSize="large" />
+              <FeedIcon color="action" fontSize="large" />
             </span>
             <span className="span1">ALL SCRIPTS</span>
             <span className="span2">{totalFiles}</span>
@@ -54,7 +52,7 @@ const TextStats = ({ texts }) => {
           </div>
           <div className="public">
             <span className="icon">
-              <People color="action" fontSize="large" />
+              <PublicIcon color="action" fontSize="large" />
             </span>
             <span className="span1">PUBLIC SCRIPTS</span>
             <span className="span2">{publicFiles}</span>
@@ -63,40 +61,55 @@ const TextStats = ({ texts }) => {
         <div className="typecover">
           {Object.entries(fileTypes).map(([type, count]) => (
             <div className="filetype" key={count}>
-              {type === 'pdf' && (
+              {type === '.pdf' && (
                 <PictureAsPdfIcon color="action" fontSize="large" />
               )}
-              {type === 'css' && <Css color="action" fontSize="large" />}
-              {type === 'js' && <Javascript color="action" fontSize="large" />}
-              {type === 'html' && <Html color="action" fontSize="large" />}
-              {type === 'php' && <Php color="action" fontSize="large" />}
-              {type === 'sh' && <Terminal color="action" fontSize="large" />}
-              {['doc', 'docx', 'txt'].includes(type) && (
-                <DescriptionIcon color="action" fontSize="large" />
+              {type === '.css' && (
+                <img className="iconImage" src={codeIcon('css')} />
               )}
-              {['jpg', 'png', 'gif'].includes(type) && (
-                <ImageIcon color="action" fontSize="large" />
+              {type === '.ts' && (
+                <img className="iconImage" src={codeIcon('ts')} />
               )}
-              {['py', 'java', 'c', 'cpp'].includes(type) && (
-                <CodeIcon color="action" fontSize="large" />
+              {type === '.js' && (
+                <img className="iconImage" src={codeIcon('js')} />
               )}
-              {type !== 'pdf' &&
+              {type === '.html' && (
+                <img className="iconImage" src={codeIcon('html')} />
+              )}
+              {type === '.py' && (
+                <img className="iconImage" src={codeIcon('py')} />
+              )}
+              {type === '.cpp' && (
+                <img className="iconImage" src={codeIcon('cpp')} />
+              )}
+              {type === '.c' && (
+                <img className="iconImage" src={codeIcon('c')} />
+              )}
+              {type === '.rb' && (
+                <img className="iconImage" src={codeIcon('rb')} />
+              )}
+              {type === 'java' && (
+                <img className="iconImage" src={codeIcon('sh')} />
+              )}
+              {type === '.sh' && <Terminal color="action" fontSize="large" />}
+              {['.doc', '.docx', '.txt'].includes(type) && (
+                <FeedIcon color="action" fontSize="large" />
+              )}
+              {type !== '.pdf' &&
                 ![
-                  'doc',
-                  'docx',
-                  'txt',
-                  'jpg',
-                  'png',
-                  'gif',
-                  'js',
-                  'py',
+                  '.doc',
+                  '.docx',
+                  '.txt',
+                  '.js',
+                  '.py',
                   'java',
-                  'c',
-                  'cpp',
-                  'css',
-                  'html',
-                  'sh',
-                  'php',
+                  '.c',
+                  '.rb',
+                  '.cpp',
+                  '.css',
+                  '.html',
+                  '.sh',
+                  '.php',
                 ].includes(type) && (
                   <InsertDriveFileIcon color="action" fontSize="large" />
                 )}
@@ -111,4 +124,7 @@ const TextStats = ({ texts }) => {
   );
 };
 
+TextStats.propTypes = {
+  texts: PropTypes.array.isRequired,
+};
 export default TextStats;

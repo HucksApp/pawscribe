@@ -25,7 +25,7 @@ def share_text(current_user):
     file_type = data.get('file_type')
     private = data.get('private', True)
     shared_with_key = token_urlsafe(8) if private else None
-    text_hash = Text.generate_text_hash(text_content)
+    text_hash = Text.generate_hash(text_content)
     # verify if file exists with same content
     existing_text = Text.query.filter_by(hash=text_hash).first()
     if existing_text:
@@ -121,7 +121,7 @@ def save_text_to_file(current_user, text_id):
         filename = unique_name(extension, filename)
     print(text.content)
     if allowed_file(f'{filename}{extension}', msg):
-        file_hash = File.generate_bin_hash(text.content.encode('utf-8'))
+        file_hash = File.generate_hash(text.content.strip().encode('utf-8'))
         existing_file = File.query.filter_by(hash=file_hash).first()
         if existing_file:
             print("hereeeeeeeeeeee")
@@ -239,7 +239,7 @@ def handle_save_text(current_user, data):
     shared_with_key = [
         'shared_with_key'] if 'shared_with_key' in data else None
     text = Text.query.get_or_404(text_id)
-    text_hash = Text.generate_text_hash(content)
+    text_hash = Text.generate_hash(content)
     existing_text = Text.query.filter_by(hash=text_hash).first()
     if text:
         text.content = content
@@ -266,7 +266,7 @@ def handle_save_textfd_to_file(current_user, data):
     msg = {"message": "", "valid": False}
     content = data['content']
     file_name = data['file_name']
-    file_hash = File.generate_text_hash(content)
+    file_hash = File.generate_hash(content)
     existing_file = File.query.filter_by(hash=file_hash).first()
     if existing_file:
         msg.update({'message': 'File already exists',

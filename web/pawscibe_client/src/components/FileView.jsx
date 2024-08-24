@@ -16,22 +16,27 @@ import EditIcon from '@mui/icons-material/Edit';
 import InfoIcon from '@mui/icons-material/Info';
 import ShareIcon from '@mui/icons-material/Share';
 import Groups2Icon from '@mui/icons-material/Groups2';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { motion } from 'framer-motion';
 import { Notify } from '../utils/Notification';
+import { useDispatch } from 'react-redux';
+import { addFileBlob } from '../store/fileBlobSlice';
 import ModalCore from './ModalCore';
+import AlertDialog from './Alert';
 import '../css/fileview.css';
 
 const FileView = ({ file, setStateChange }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [iframeSrc, setIframeSrc] = useState('');
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchFile = async () => {
@@ -46,12 +51,19 @@ const FileView = ({ file, setStateChange }) => {
         const url = URL.createObjectURL(response.data);
         //const url = URL.createObjectURL(new Blob([response.data]));
         setIframeSrc(url);
+        dispatch(addFileBlob({ id: file.id.toString(), blob: response.data }));
         console.log('here====', response.data);
       } catch (error) {
-        Notify({
-          message: `${error.message}. ${error.response.data.message}`,
-          type: 'error',
-        });
+        if (
+          error.response.data.msg &&
+          error.response.data.msg == 'Token has expired'
+        )
+          navigate('/');
+        else
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
       }
     };
 
@@ -71,19 +83,35 @@ const FileView = ({ file, setStateChange }) => {
     setAnchorEl(null);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    handleMenuClose();
+    setDialogOpen(true);
+  };
+
+  const handleNo = () => {
+    setDialogOpen(false);
+  };
+
+  const handleYes = async () => {
     try {
       const response = await axios.delete(`${base}/Api/v1/files/${file.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (
+        error.response.data.msg &&
+        error.response.data.msg == 'Token has expired'
+      )
+        navigate('/');
+      else
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
     }
     setStateChange(true);
+    setDialogOpen(false);
     handleMenuClose();
   };
 
@@ -109,10 +137,16 @@ const FileView = ({ file, setStateChange }) => {
       Notify({ message: response.data.message, type: 'success' });
       console.log(response.data);
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (
+        error.response.data.msg &&
+        error.response.data.msg == 'Token has expired'
+      )
+        navigate('/');
+      else
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
     }
     setStateChange(true);
     handleMenuClose();
@@ -143,10 +177,16 @@ const FileView = ({ file, setStateChange }) => {
       );
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      Notify({
-        message: `${error.message}. ${error.response.data.message}`,
-        type: 'error',
-      });
+      if (
+        error.response.data.msg &&
+        error.response.data.msg == 'Token has expired'
+      )
+        navigate('/');
+      else
+        Notify({
+          message: `${error.message}. ${error.response.data.message}`,
+          type: 'error',
+        });
     }
     setStateChange(true);
     if (file.private == true) setOpen(true);
@@ -190,7 +230,7 @@ const FileView = ({ file, setStateChange }) => {
               <div className="menuitem"> Edit</div>
             </MenuItem>
             <MenuItem onClick={handleDelete}>
-              <DeleteIcon
+              <DeleteForeverIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
               <div className="menuitem">Delete</div>
@@ -238,12 +278,20 @@ const FileView = ({ file, setStateChange }) => {
         view_type={'keyView'}
         file={file}
       />
+      <AlertDialog
+        title={'Alert'}
+        message={`Delete ${file.filename} completely ?`}
+        handleYes={handleYes}
+        handleNo={handleNo}
+        open={dialogOpen}
+        handleClose={() => setDialogOpen(false)}
+      />
     </motion.div>
   );
 };
 
 FileView.propTypes = {
-  file: PropTypes.func.isRequired,
+  file: PropTypes.array.isRequired,
   setStateChange: PropTypes.func.isRequired,
 };
 

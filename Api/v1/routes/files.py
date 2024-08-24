@@ -31,7 +31,7 @@ def uploadfile(current_user):
         return jsonify(msg), 400
     if file and allowed_file(file.filename, msg):
         file_data = file.read()
-        file_hash = File.generate_bin_hash(file_data)
+        file_hash = File.generate_hash(file_data)
         existing_file = File.query.filter_by(hash=file_hash).first()
         if existing_file:
             msg.update({'message': 'File already exists',

@@ -1,14 +1,9 @@
 from db import db
 from hashlib import sha256
+import uuid
 
 class Base(db.Model):
     __abstract__ = True
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
-    @staticmethod
-    def generate_bin_hash(data):
-        return sha256(data).hexdigest()
     
-    @staticmethod
-    def generate_text_hash(content):
-        return sha256(content.encode()).hexdigest()

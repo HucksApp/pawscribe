@@ -5,6 +5,7 @@ import InputBase from '@mui/material/InputBase';
 import { alpha, styled } from '@mui/material';
 import Logo from './Logo';
 import MenuDrawer from './MenuDrawer';
+import PropTypes from 'prop-types';
 import '../css/appbar.css';
 
 const Search = styled('div')(({ theme }) => ({
@@ -70,4 +71,7 @@ const Appbar = ({ setSearchValue }) => {
   );
 };
 
+Appbar.propTypes = {
+  setSearchValue: PropTypes.func.isRequired,
+};
 export default Appbar;

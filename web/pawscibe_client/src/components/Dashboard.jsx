@@ -4,37 +4,44 @@ import FileList from './FileList';
 import TextList from './TextList';
 import Footer from './Footer';
 import NoContent from './NoContent';
-import '../css/dashboard.css';
 import PropTypes from 'prop-types';
-const Dashboard = ({
-  stateChanged,
-  setStateChange,
-  texts,
-  setTexts,
-  files,
-  setFiles,
-}) => {
-  useEffect(() => {}, [texts, files]);
+import FolderList from './FolderList';
+import { useSelector } from 'react-redux';
+import '../css/dashboard.css';
+
+const Dashboard = ({ stateChanged, setStateChange }) => {
   const [searchValue, setSearchValue] = useState('');
+  const texts = useSelector(state => state.texts);
+  const files = useSelector(state => state.files);
+  const folders = useSelector(state => state.folders);
+  const projects = useSelector(state => state.projects);
+  useEffect(() => {}, [texts, files, folders, projects]);
+
+  //const projects = useSelector(state => state.projects);
+
   return (
     <div className="dashboard">
       <Appbar setSearchValue={setSearchValue} />
-      {(files.length > 0) | (texts.length > 0) ? (
-        <p className="hidden"></p>
-      ) : (
-        <NoContent msg={'No Folder, Files, or script present'} />
-      )}
 
+      {[files, texts, folders, projects].every(
+        list => list && Array.isArray(list) && list.length < 1
+      ) ? (
+        <NoContent msg={'No Folder, Files, or script present'} />
+      ) : (
+        <p className="hidden"></p>
+        //{/*<NoContent msg={'No Folder, Files, or script present'} />*/ }
+      )}
       <FileList
-        files={files}
-        setFiles={setFiles}
         searchValue={searchValue}
         setStateChange={setStateChange}
         stateChanged={stateChanged}
       />
       <TextList
-        texts={texts}
-        setTexts={setTexts}
+        searchValue={searchValue}
+        setStateChange={setStateChange}
+        stateChanged={stateChanged}
+      />
+      <FolderList
         searchValue={searchValue}
         setStateChange={setStateChange}
         stateChanged={stateChanged}
@@ -45,12 +52,8 @@ const Dashboard = ({
 };
 
 Dashboard.propTypes = {
-  stateChanged: PropTypes.object.isRequired,
+  stateChanged: PropTypes.bool.isRequired,
   setStateChange: PropTypes.func.isRequired,
-  texts: PropTypes.object.isRequired,
-  setTexts: PropTypes.func.isRequired,
-  files: PropTypes.object.isRequired,
-  setFiles: PropTypes.func.isRequired,
 };
 
 export default Dashboard;

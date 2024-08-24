@@ -1,33 +1,49 @@
 import React from 'react';
 import FileViewer from 'react-file-viewer';
-//import { Document, Page } from 'react-pdf';
-//import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import { motion } from 'framer-motion';
 import ImageNotSupportedIcon from '@mui/icons-material/ImageNotSupported';
+import PropTypes from 'prop-types';
 
 const DataViewer = ({ src, file }) => {
   if (!file) return null;
 
+  const renderSvgFile = () => (
+    <object
+      type="image/svg+xml"
+      data={src}
+      style={{ width: '100%', height: '100%' }}
+    >
+      Your browser does not support SVG files.
+    </object>
+  );
+
+  const renderTextFile = () => (
+    <iframe
+      src={src}
+      style={{ width: '100%', height: '100%', border: 'none' }}
+      title={file.filename}
+    />
+  );
+
   const renderFile = () => {
-    const extension = file.filename.split('.')[1];
+    const extension = file.filename.split('.').pop().toLowerCase();
     console.log(extension);
+
     switch (extension) {
-      //return <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{/*file.content*/}</pre>;
-      case '.txt':
       case 'pdf':
       case 'jpeg':
       case 'jpg':
       case 'png':
+        return <FileViewer fileType={extension} filePath={src} />;
+      case 'txt':
+      case 'py':
+      case 'js':
+      case 'html':
+      case 'css':
+      case 'json':
+        return renderTextFile();
       case 'svg':
-        return (
-          <FileViewer
-            fileType={extension}
-            filePath={src}
-            //errorComponent={CustomErrorComponent}
-            //onError={this.onError}
-          />
-        );
-      //return <img src={file} alt={file.name} style={{ maxWidth: '100%', maxHeight: '100%' }} />;
+        return renderSvgFile();
       default:
         return (
           <div className="unsupported">
@@ -50,8 +66,8 @@ const DataViewer = ({ src, file }) => {
 
   return (
     <motion.div
-      initial={{ scale: 0 }}
-      animate={{ rotate: 360, scale: 1 }}
+      initial={{ x: 300 }}
+      animate={{ x: 0 }}
       transition={{
         type: 'spring',
         stiffness: 260,
@@ -63,6 +79,13 @@ const DataViewer = ({ src, file }) => {
       </div>
     </motion.div>
   );
+};
+
+DataViewer.propTypes = {
+  src: PropTypes.string.isRequired,
+  file: PropTypes.shape({
+    filename: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default DataViewer;

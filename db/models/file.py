@@ -2,7 +2,7 @@ from db import db
 from .base import Base
 from .user import User
 from datetime import datetime
-
+from hashlib import sha256
 
 class File(Base):
     __tablename__ = 'file'
@@ -10,7 +10,7 @@ class File(Base):
     filename = db.Column(db.String(256), nullable=False)
     data = db.Column(db.LargeBinary(length=(2**32)-1), nullable=False)
     hash = db.Column(db.String(64), unique=True, nullable=False)
-    owner_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
+    owner_id = db.Column(db.String(36), db.ForeignKey(User.id), nullable=False)
     private = db.Column(db.Boolean, default=True)
     shared_with_key = db.Column(db.String(128), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -20,8 +20,11 @@ class File(Base):
         self.filename = filename
         self.owner_id = owner_id
         self.data = data
-        self.hash = self.generate_bin_hash(data)
+        self.hash = self.generate_hash(data)
 
+    @staticmethod
+    def generate_hash(data):
+        return sha256(data).hexdigest()
 
     def to_dict(self):
         return  {

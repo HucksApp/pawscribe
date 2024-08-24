@@ -2,19 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DescriptionIcon from '@mui/icons-material/Description';
+import FeedIcon from '@mui/icons-material/Feed';
 import ImageIcon from '@mui/icons-material/Image';
-import CodeIcon from '@mui/icons-material/Code';
-import {
-  Css,
-  Javascript,
-  Html,
-  Php,
-  Terminal,
-  Lock,
-  People,
-} from '@mui/icons-material';
+import PublicIcon from '@mui/icons-material/Public';
+import codeIcon from '../utils/codeIcon';
+import { Php, Terminal, Lock } from '@mui/icons-material';
 import '../css/filestat.css';
+import PropTypes from 'prop-types';
 
 const FileStats = ({ files }) => {
   //{php:"#87CEFA",pdf:"#A9A9A9",js:"#FFFF00",html:"#FF0000",sh:"#ff4500",css:"#0000FF",py:"#2b35af"}
@@ -53,7 +47,7 @@ const FileStats = ({ files }) => {
           </div>
           <div className="public">
             <span className="icon">
-              <People color="action" fontSize="large" />
+              <PublicIcon color="action" fontSize="large" />
             </span>
             <span className="span1">PUBLIC FILES</span>
             <span className="span2">{publicFiles}</span>
@@ -68,19 +62,31 @@ const FileStats = ({ files }) => {
                 />
               )}
               {type === 'css' && (
-                <Css
-                  sx={{ fontSize: 30, color: '#0000FF', fontWeight: 1000 }}
-                />
+                <img className="iconImage" src={codeIcon(type)} />
+              )}
+              {type === 'ts' && (
+                <img className="iconImage" src={codeIcon(type)} />
               )}
               {type === 'js' && (
-                <Javascript
-                  sx={{ fontSize: 30, color: '#9B870C', fontWeight: 1000 }}
-                />
+                <img className="iconImage" src={codeIcon(type)} />
               )}
               {type === 'html' && (
-                <Html
-                  sx={{ fontSize: 30, color: '#FF0000', fontWeight: 1000 }}
-                />
+                <img className="iconImage" src={codeIcon(type)} />
+              )}
+              {type === 'py' && (
+                <img className="iconImage" src={codeIcon(type)} />
+              )}
+              {type === 'cpp' && (
+                <img className="iconImage" src={codeIcon(type)} />
+              )}
+              {type === 'c' && (
+                <img className="iconImage" src={codeIcon(type)} />
+              )}
+              {type === 'rb' && (
+                <img className="iconImage" src={codeIcon(type)} />
+              )}
+              {type === 'java' && (
+                <img className="iconImage" src={codeIcon(type)} />
               )}
               {type === 'php' && (
                 <Php
@@ -93,18 +99,13 @@ const FileStats = ({ files }) => {
                 />
               )}
               {['doc', 'docx', 'txt'].includes(type) && (
-                <DescriptionIcon
+                <FeedIcon
                   sx={{ fontSize: 30, color: '#616161', fontWeight: 1000 }}
                 />
               )}
-              {['jpg', 'png', 'gif'].includes(type) && (
+              {['jpg', 'png', 'gif', 'svg'].includes(type) && (
                 <ImageIcon
                   sx={{ fontSize: 30, color: '#616161', fontWeight: 1000 }}
-                />
-              )}
-              {['py', 'java', 'c', 'cpp'].includes(type) && (
-                <CodeIcon
-                  sx={{ fontSize: 30, color: '#2b35af', fontWeight: 1000 }}
                 />
               )}
               {type !== 'pdf' &&
@@ -118,6 +119,7 @@ const FileStats = ({ files }) => {
                   'js',
                   'py',
                   'java',
+                  'svg',
                   'c',
                   'cpp',
                   'css',
@@ -139,5 +141,7 @@ const FileStats = ({ files }) => {
     </motion.div>
   );
 };
+
+FileStats.propTypes = { files: PropTypes.array.isRequired };
 
 export default FileStats;

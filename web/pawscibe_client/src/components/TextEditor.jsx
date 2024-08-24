@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
 import { Notify } from '../utils/Notification';
 import TextEditorToolBar from './TextEditorToolBar';
@@ -7,9 +7,15 @@ import { Box } from '@mui/material';
 import axios from 'axios';
 import ConsoleDrawer from './ConsoleDrawer';
 import PropTypes from 'prop-types';
-
+import { useNavigate } from 'react-router-dom';
+import { /*useSelector,*/ useDispatch } from 'react-redux';
+import { setProject } from '../store/projectSlice';
+import { useSearchParams } from 'react-router-dom';
+import ProjectDrawer from './ProjectDrawer';
+import '../css/editor.css';
 const TextEditor = ({ setStateChange }) => {
   const editorRef = useRef(null);
+  const navigate = useNavigate();
   const [options, setOptions] = useState({
     theme: 'vs-dark',
     language: 'plaintext',
@@ -19,15 +25,53 @@ const TextEditor = ({ setStateChange }) => {
   });
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
+  const [searchParams] = useSearchParams();
   const [consoleOutput, setConsoleOutput] = useState('');
+  //const [stateChanged, setStateChanged] = useState(false);
   const [editorContent, setEditorContent] = useState('');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const dispatch = useDispatch();
   const username = 'User'; // Change this to dynamically get the username
   const room = 'editorRoom'; // Change this to dynamically get the room
+  const folderId = searchParams.get('folderId');
+
+  useEffect(() => {
+    const fetchFolderTree = async () => {
+      try {
+        const response = await axios.get(
+          `${base}/Api/v1/folders/${folderId}/tree`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!response.data.folder.fx) response.data.folder.fx = {};
+        console.log(response.data.folder);
+        dispatch(setProject(response.data.folder));
+      } catch (error) {
+        console.error('Failed to fetch folder contents:', error);
+      }
+    };
+    console.log(folderId);
+    if (folderId != '' && folderId != null) fetchFolderTree();
+  }, [folderId]);
 
   const toggleChat = () => {
     setChatOpen(!chatOpen);
+  };
+
+  const toggleDrawer = () => {
+    console.log(open);
+    setOpen(!open);
+  };
+
+  const addFile = () => {
+    // Implement file addition logic here
+  };
+
+  const deleteFile = () => {
+    // Implement file deletion logic here
   };
 
   const handleEditorDidMount = editor => {
@@ -45,8 +89,21 @@ const TextEditor = ({ setStateChange }) => {
     // Implement the save to backend logic
 
     const addText = async () => {
-      const extension = { python: '.py', bash: '.sh', javascript: '.js' };
-
+      const extension = {
+        python: '.py',
+        bash: '.sh',
+        javascript: '.js',
+        plaintext: '.txt',
+        java: '.java',
+        html: '.html',
+        typescript: '.ts',
+        css: '.css',
+        ruby: '.rb',
+        php: '.php',
+        c: '.c',
+        cpp: '.cpp',
+      };
+      console.log(options.language);
       try {
         const response = await axios.post(
           base + '/Api/v1/text/share',
@@ -64,10 +121,17 @@ const TextEditor = ({ setStateChange }) => {
         setStateChange(false);
         Notify({ message: response.data.message, type: 'success' });
       } catch (error) {
-        Notify({
-          message: `${error.message}. ${error.response.data.message}`,
-          type: 'error',
-        });
+        console.log(error);
+        if (
+          error.response.data.msg &&
+          error.response.data.msg == 'Token has expired'
+        )
+          navigate('/');
+        else
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
       }
     };
     addText();
@@ -106,8 +170,15 @@ const TextEditor = ({ setStateChange }) => {
     }
   };
 
+  const handleSetEditorContent = content => {
+    setEditorContent(content);
+    if (editorRef.current) {
+      editorRef.current.setValue(content); // Directly update the editor content
+    }
+  };
+
   return (
-    <Box>
+    <Box sx={{ width: '100%' }}>
       <TextEditorToolBar
         onThemeChange={theme => handleChangeOptions({ theme })}
         onLanguageChange={language => handleChangeOptions({ language })}
@@ -120,20 +191,32 @@ const TextEditor = ({ setStateChange }) => {
         onTogglePublic={handleTogglePublic}
         runCode={runCode}
         toggleChat={toggleChat}
+        toggleDrawer={toggleDrawer}
       />
-      <Box sx={{ height: '80vh' }}>
-        <Editor
-          height="100%"
-          language={options.language}
-          theme={options.theme}
-          options={{
-            fontSize: options.fontSize,
-            fontWeight: options.fontWeight,
-            fontFamily: options.fontFamily,
-          }}
-          onMount={handleEditorDidMount}
-          onChange={handleEditorChange}
-        />
+      <Box className="editorcase" sx={{ height: '80vh', width: '100%' }}>
+        <div className="editorcase">
+          <ProjectDrawer
+            open={open}
+            className={'projectdrawer'}
+            themeType={options.theme}
+            toggleDrawer={toggleDrawer}
+            addFile={addFile}
+            deleteFile={deleteFile}
+            setEditorContent={handleSetEditorContent}
+          />
+          <Editor
+            height="100%"
+            language={options.language}
+            theme={options.theme}
+            options={{
+              fontSize: options.fontSize,
+              fontWeight: options.fontWeight,
+              fontFamily: options.fontFamily,
+            }}
+            onMount={handleEditorDidMount}
+            onChange={handleEditorChange}
+          />
+        </div>
       </Box>
       <ChatDrawer
         open={chatOpen}

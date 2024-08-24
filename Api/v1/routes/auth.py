@@ -12,7 +12,7 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    user = User.query.filter_by(username=username).first()
+    user: User = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
         print(user)
         token = create_access_token(
@@ -20,7 +20,7 @@ def login():
             fresh=datetime.timedelta(
                 minutes=60))
         msg.update({"message": "Logged in successfully",
-                    "valid": True, "token": token})
+                    "valid": True, "token": token, 'user': user.to_dict()})
         response = jsonify(msg)
         set_access_cookies(response, token)
         return response, 200
