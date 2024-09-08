@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, createSearchParams } from 'react-router-dom';
+import React, { useState /*useEffect*/ } from 'react';
+import { useNavigate /*createSearchParams*/ } from 'react-router-dom';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import {
@@ -21,54 +21,102 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { motion } from 'framer-motion';
 import { Notify } from '../utils/Notification';
-import { useDispatch } from 'react-redux';
-import { addFileBlob } from '../store/fileBlobSlice';
+import { /*useDispatch*/ useSelector } from 'react-redux';
+//import { addFileBlob } from '../store/fileBlobSlice';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FeedIcon from '@mui/icons-material/Feed';
+import ImageIcon from '@mui/icons-material/Image';
+import codeIcon from '../utils/codeIcon';
 import ModalCore from './ModalCore';
 import AlertDialog from './Alert';
 import '../css/fileview.css';
 
-const FileView = ({ file, setStateChange }) => {
+const File = ({ file, setStateChange, handleOpenFile }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [iframeSrc, setIframeSrc] = useState('');
+  const blob = useSelector(state =>
+    state.fileBlobs.find(blob => blob.id === file.id.toString())
+  );
+  //const iframeSrc = URL.createObjectURL(blob);
+  const iframeSrc = blob;
   const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  //const dispatch = useDispatch();
 
-  useEffect(() => {
-    const fetchFile = async () => {
-      try {
-        const response = await axios.get(
-          `${base}/Api/v1/files/download/${file.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            responseType: 'blob',
-          }
+  const icon = file => {
+    const type = file.filename.split('.').pop();
+    switch (type) {
+      case 'js':
+      case 'ts':
+      case 'jsx':
+      case 'html':
+      case 'py':
+      case 'c':
+      case 'cpp':
+      case 'css':
+      case 'java':
+      case 'rb':
+        return <img className="iconImageB" src={codeIcon(type)} />;
+
+      case 'doc':
+      case 'txt':
+        return (
+          <FeedIcon
+            sx={{
+              fontSize: 100,
+              color: '#616161',
+              fontWeight: 1000,
+              alignSelf: 'center',
+              ':hover': { color: '#878787' },
+            }}
+          />
         );
-        const url = URL.createObjectURL(response.data);
-        //const url = URL.createObjectURL(new Blob([response.data]));
-        setIframeSrc(url);
-        dispatch(addFileBlob({ id: file.id.toString(), blob: response.data }));
-        console.log('here====', response.data);
-      } catch (error) {
-        if (
-          error.response.data.msg &&
-          error.response.data.msg == 'Token has expired'
-        )
-          navigate('/');
-        else
-          Notify({
-            message: `${error.message}. ${error.response.data.message}`,
-            type: 'error',
-          });
-      }
-    };
+      case 'pdf':
+        return (
+          <PictureAsPdfIcon
+            sx={{
+              fontSize: 100,
+              color: '#616161',
+              fontWeight: 1000,
+              alignSelf: 'center',
+              ':hover': { color: '#878787' },
+            }}
+          />
+        );
 
-    fetchFile();
-  }, [file.id]);
+      case 'svg':
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+        return (
+          <ImageIcon
+            sx={{
+              fontSize: 100,
+              color: '#616161',
+              fontWeight: 1000,
+              alignSelf: 'center',
+              ':hover': { color: '#878787' },
+            }}
+          />
+        );
+      default:
+        return (
+          <InsertDriveFileIcon
+            sx={{
+              fontSize: 100,
+              color: '#616161',
+              fontWeight: 1000,
+              alignSelf: 'center',
+              ':hover': { color: '#878787' },
+            }}
+          />
+        );
+    }
+  };
 
   const handleCloseAll = () => {
     setOpen(false);
@@ -157,15 +205,15 @@ const FileView = ({ file, setStateChange }) => {
     handleMenuClose();
   };
 
-  const handleOpen = () => {
-    const params = { id: file.id, src: iframeSrc };
-    /* navigate({
-            pathname: '/view',
-            Search: `?${createSearchParams(params)}`
-        })*/
-    navigate(`/viewfile?${createSearchParams(params)}`);
-    handleMenuClose();
-  };
+  //   const handleOpen = () => {
+  //     const params = { id: file.id, src: iframeSrc };
+  //     /* navigate({
+  //             pathname: '/view',
+  //             Search: `?${createSearchParams(params)}`
+  //         })*/
+  //     navigate(`/viewfile?${createSearchParams(params)}`);
+  //     handleMenuClose();
+  //   };
 
   const handleShare = async () => {
     try {
@@ -206,13 +254,41 @@ const FileView = ({ file, setStateChange }) => {
       transition={{ duration: 0.9 }}
     >
       <div title={file.filename} className="card">
-        <CardContent>
-          <div className="filename">{file.filename}</div>
-          <iframe
-            src={iframeSrc}
-            style={{ width: '100%', height: '200px', border: 'none' }}
-            title={file.name}
-          ></iframe>
+        <CardContent
+          sx={{
+            alignSelf: 'center',
+          }}
+        >
+          <div onClick={() => handleOpenFile(file)}>{icon(file)}</div>
+          <div className="filename">
+            {' '}
+            <div className="filetitle fname">{file.filename}</div>{' '}
+          </div>
+          <div className="filename">
+            {' '}
+            <div className="filetitle">Type:</div>{' '}
+            <div className="filevalue">File</div>
+          </div>
+          <div className="filename">
+            {' '}
+            <div className="filetitle">Created:</div>{' '}
+            <div className="filevalue">{file.created_at}</div>
+          </div>
+          <div className="filename">
+            {' '}
+            <div className="filetitle">Last updated:</div>{' '}
+            <div className="filevalue">{file.updated_at}</div>
+          </div>
+          <div className="filename">
+            {' '}
+            <div className="filetitle">Acess</div>{' '}
+            <div className="filevalue">
+              {file && file.private ? 'Private' : 'Public'}
+            </div>
+          </div>
+
+          {/*<div onClick={() => handleOpenFile(file)}>{icon(file)}</div>
+          <div className="filename">{file.filename}</div>*/}
         </CardContent>
         <CardActions>
           <IconButton onClick={handleMenuOpen}>
@@ -263,7 +339,7 @@ const FileView = ({ file, setStateChange }) => {
                 <div className="menuitem">Public</div>
               )}
             </MenuItem>
-            <MenuItem onClick={handleOpen}>
+            <MenuItem onClick={() => handleOpenFile(file)}>
               <InfoIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
@@ -291,9 +367,10 @@ const FileView = ({ file, setStateChange }) => {
   );
 };
 
-FileView.propTypes = {
+File.propTypes = {
   file: PropTypes.array.isRequired,
   setStateChange: PropTypes.func.isRequired,
+  handleOpenFile: PropTypes.func.isRequired,
 };
 
-export default FileView;
+export default File;

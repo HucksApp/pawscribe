@@ -8,7 +8,7 @@ from Api.__init__ import db
 from ..utils.required import token_required
 from datetime import datetime
 from ..utils.unique import  unique_name
-from ..utils.route_utility import remove_all_strictly, find_all_subfolder, get_folder_with_subfolders, get_all_children, get_all_files, get_all_texts, get_all_folders, get_parent_folders, its_included,get_folder_tree, handle_file_inclusion,handle_folder_inclusion,handle_text_inclusion, handle_text_exclusion, handle_folder_exclusion, handle_file_exclusion, add_folder_to_zip
+from ..utils.route_utility import remove_folder_and_contents, __find_all_decendant, get_child_subfolders,get_child_texts,get_child_files,get_folder_tree, handle_file_inclusion,handle_folder_inclusion,handle_text_inclusion, handle_text_exclusion, handle_folder_exclusion, handle_file_exclusion, add_folder_to_zip
 from io import BytesIO
 import zipfile
 
@@ -101,9 +101,7 @@ def handle_folder_scripts(current_user, folder_id):
     if folder.owner_id != current_user.id:
         msg.update({"message": "Permission denied"})
         return jsonify(msg), 403
-    #texts = get_all_texts(folder)
-    textsfx = FolderFxS.query.filter_by(parent_id=folder_id, type="Text").all()
-    texts = [{'fx' :textfx.to_dict(),**Text.query.get(textfx.text_id).to_dict()} for textfx in textsfx]
+    texts = get_child_texts(folder_id, True)
     msg.update({"message": "success", "texts": texts, "valid": True})
     return jsonify(msg), 200
 
@@ -117,9 +115,8 @@ def handle_folder_files(current_user, folder_id):
     if folder.owner_id != current_user.id:
         msg.update({"message": "Permission denied"})
         return jsonify(msg), 403
-    #files = get_all_files(folder)
-    filesfx = FolderFxS.query.filter_by(parent_id=folder_id, type="File").all()
-    files = [{'fx' :filefx.to_dict(),**File.query.get(filefx.file_id).to_dict()} for filefx in filesfx]
+   
+    files = get_child_files(folder_id, True)
     msg.update({"message": "success", "valid": True, "files": files})
     return jsonify(msg), 200
 
@@ -171,12 +168,9 @@ def handle_sub_folders(current_user, folder_id):
     if folder.owner_id != current_user.id:
         msg.update({"message": "Permission denied"})
         return jsonify(msg), 403
-
-    subfolders_list = get_all_folders(folder)
-    # subfolders = folder.children.all()
-    # subfolders_list = [subfolder.to_dict() for subfolder in subfolders]
+    subfolders_list = get_child_subfolders(folder_id,True)
     msg.update({"message": "success", "valid": True,
-               "subfolders": subfolders_list})
+               "folders": subfolders_list})
     return jsonify(msg), 200
 
 
@@ -189,17 +183,10 @@ def handle_get_all_ffxs(current_user, folder_id):
     if folder.owner_id != current_user.id:
         msg.update({"message": "Permission denied"})
         return jsonify(msg), 403
-    children = get_all_children(folder)
+    children = __find_all_decendant(folder, True)
+    print(children)
     msg.update({"message": "success", "valid": True, "children": children})
     return jsonify(msg), 200
-
-
-
-
-
-
-
-
 
 
 
@@ -279,7 +266,7 @@ def handle_delete_ffs(current_user, fxs_id):
         return jsonify(msg), 400
 
     db.session.commit()
-    msg.update({'message': 'Deleted successfully', 'valid': True})
+    msg.update({'message': 'Included successfully', 'valid': True})
     return jsonify(msg), 200
 
 
@@ -294,22 +281,18 @@ def handle_download_folder(current_user, folder_id):
     print(folder_id)
 
     # Create an in-memory byte stream for the zip file
-    # zip_stream = BytesIO()
+    zip_stream = BytesIO()
 
-    # # Create a ZipFile object
-    # with zipfile.ZipFile(zip_stream, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-    #     # Add the folder and its contents to the zip
-    #     add_folder_to_zip(zip_file, folder)
+    # Create a ZipFile object
+    with zipfile.ZipFile(zip_stream, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Add the folder and its contents to the zip
+        add_folder_to_zip(zip_file, folder)
 
-    # # Seek to the beginning of the stream
-    # zip_stream.seek(0)
+    # Seek to the beginning of the stream
+    zip_stream.seek(0)
 
-    # # Send the zip file as a downloadable response
-    # return send_file(zip_stream, as_attachment=True, download_name=f"{folder.foldername}.zip", mimetype='application/zip')
-
-
-
-
+    # Send the zip file as a downloadable response
+    return send_file(zip_stream, as_attachment=True, download_name=f"{folder.foldername}.zip", mimetype='application/zip')
 
 
 
@@ -320,15 +303,32 @@ def handle_download_folder(current_user, folder_id):
 @token_required
 def handle_delete_folder(current_user, folder_id):
     msg = {"message": "", "valid": False}
-    if not folder_id:
-        msg.update({'message': 'folder id is required'})
-        return jsonify(msg), 400
 
+    # Retrieve the folder or return 404 if not found
     folder: Folder = Folder.query.get_or_404(folder_id)
+    
+    # Check if the user is the owner of the folder
     if folder.owner_id != current_user.id:
         return jsonify({"message": "Permission denied"}), 403
-    remove_all_strictly(folder)
-    db.session.delete(folder)
-    db.session.commit()
+    
+    # Check for any subfolders
+    existing_parentsfx: list[FolderFxS] = FolderFxS.query.filter_by(folder_id=folder.id, type='Folder').all()
+    existing_parents: list[Folder] =[Folder.query.get(f.parent_id) for f in existing_parentsfx]
+    if len(existing_parents) > 0:
+        # Construct the message with a list of parent names
+        parent_names = ', '.join([parent.foldername for parent in existing_parents])
+        message = f"Exclude {folder.foldername} from {parent_names} before you can delete it."
+        msg.update({"message": message})
+        return jsonify(msg), 409  # Use 409 Conflict to indicate that deletion can't proceed
+    
+    # Perform the deletion
+    try:
+        remove_folder_and_contents(folder)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": str(e)}), 500  # Return an error message if something goes wrong
+
+    # Return success message
     msg.update({'message': 'Deleted successfully', 'valid': True})
     return jsonify(msg), 200

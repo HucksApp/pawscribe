@@ -40,7 +40,7 @@ const OpenViewFile = () => {
         <Tooltip title="Back" sx={{ marginRight: 0.5, marginLeft: 0.5 }}>
           <ArrowBackIcon
             className="tool"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(-1)}
             sx={{ fontSize: 40, color: '#616161', fontWeight: 1000 }}
           />
         </Tooltip>

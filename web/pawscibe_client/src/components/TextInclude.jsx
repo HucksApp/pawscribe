@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FeedIcon from '@mui/icons-material/Feed';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import ImageIcon from '@mui/icons-material/Image';
 import PropTypes from 'prop-types';
 import {
@@ -11,16 +12,9 @@ import {
   Typography,
   //IconButton,
 } from '@mui/material';
-import {
-  //Css,
-  Javascript,
-  //Html,
-  //Php,
-  //Terminal,
-  // Lock,
-} from '@mui/icons-material';
+
 import { useSelector } from 'react-redux';
-import CodeIcon from '@mui/icons-material/Code';
+import codeIcon from '../utils/codeIcon';
 import { motion } from 'framer-motion';
 
 const TextInclude = ({ onSelect }) => {
@@ -43,27 +37,19 @@ const TextInclude = ({ onSelect }) => {
   }, [text.id]);*/
 
   const icon = text => {
-    switch (text.file_type.replace('.', '')) {
-      case 'py':
-        return (
-          <CodeIcon
-            sx={{
-              fontSize: 40,
-              color: '#3776AB',
-              fontWeight: 1000,
-            }}
-          />
-        );
+    const type = text.file_type.replace('.', '');
+    switch (type) {
       case 'js':
-        return (
-          <Javascript
-            sx={{
-              fontSize: 40,
-              color: '#F7DF1E',
-              fontWeight: 1000,
-            }}
-          />
-        );
+      case 'ts':
+      case 'jsx':
+      case 'html':
+      case 'py':
+      case 'c':
+      case 'cpp':
+      case 'css':
+      case 'java':
+      case 'rb':
+        return <img className="iconImage" src={codeIcon(type)} />;
 
       case 'doc':
       case 'txt':
@@ -102,7 +88,7 @@ const TextInclude = ({ onSelect }) => {
         );
       default:
         return (
-          <FeedIcon
+          <InsertDriveFileIcon
             sx={{
               fontSize: 40,
               color: '#616161',

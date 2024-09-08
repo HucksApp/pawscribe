@@ -3,8 +3,9 @@ import PropTypes from 'prop-types';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FeedIcon from '@mui/icons-material/Feed';
 import ImageIcon from '@mui/icons-material/Image';
-import CodeIcon from '@mui/icons-material/Code';
+import codeIcon from '../utils/codeIcon';
 import IncludeCard from './IncludeCard';
+import New from './New';
 //import PublicIcon from '@mui/icons-material/Public';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import {
@@ -12,44 +13,29 @@ import {
   Grid,
   //IconButton,
 } from '@mui/material';
-import {
-  //Css,
-  Javascript,
-  //Html,
-  //Php,
-  //Terminal,
-  // Lock,
-} from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 
-const FileInclude = ({ onSelect }) => {
+const FileInclude = ({ onSelect, setModalOpen }) => {
   const files = useSelector(state => state.files);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredFiles, setFilteredFiles] = useState([]);
 
   const icon = file => {
-    switch (file.filename.split('.').pop()) {
-      case 'py':
-        return (
-          <CodeIcon
-            sx={{
-              fontSize: 40,
-              color: '#3776AB',
-              fontWeight: 1000,
-            }}
-          />
-        );
+    const type = file.filename.split('.').pop();
+    console.log(type);
+    switch (type) {
       case 'js':
-        return (
-          <Javascript
-            sx={{
-              fontSize: 40,
-              color: '#F7DF1E',
-              fontWeight: 1000,
-            }}
-          />
-        );
+      case 'ts':
+      case 'jsx':
+      case 'html':
+      case 'py':
+      case 'c':
+      case 'cpp':
+      case 'css':
+      case 'java':
+      case 'rb':
+        return <img className="iconImage" src={codeIcon(type)} />;
 
       case 'doc':
       case 'txt':
@@ -118,6 +104,7 @@ const FileInclude = ({ onSelect }) => {
         onChange={e => setSearchTerm(e.target.value)}
       />
       <Grid container spacing={2}>
+        <New type={'File'} setModalOpen={setModalOpen} onSelect={onSelect} />
         {filteredFiles.map(file => (
           <Grid item xs={3} key={file.id}>
             <motion.div
@@ -137,6 +124,7 @@ const FileInclude = ({ onSelect }) => {
 
 FileInclude.propTypes = {
   onSelect: PropTypes.func.isRequired,
+  setModalOpen: PropTypes.func.isRequired,
 };
 
 export default FileInclude;

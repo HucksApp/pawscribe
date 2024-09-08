@@ -4,9 +4,11 @@ import { Notify } from '../utils/Notification';
 import '../css/keyView.css';
 import PropTypes from 'prop-types';
 
-const Keyview = ({ file, handleClose }) => {
+const Keyview = ({ value, handleClose }) => {
   const handleCopy = () => {
-    navigator.clipboard.writeText(`key=${file.shared_with_key}&id=${file.id}`);
+    navigator.clipboard.writeText(
+      `key=${value.shared_with_key}&id=${value.id}`
+    );
     Notify({ message: 'key Copied', type: 'info' });
   };
   return (
@@ -21,13 +23,13 @@ const Keyview = ({ file, handleClose }) => {
       <div
         className="key"
         onClick={handleCopy}
-      >{`key=${file.shared_with_key}&id=${file.id}`}</div>
+      >{`key=${value.shared_with_key}&id=${value.id}`}</div>
     </div>
   );
 };
 
 Keyview.propTypes = {
-  file: PropTypes.object.isRequired,
+  value: PropTypes.object.isRequired,
   handleClose: PropTypes.func.isRequired,
 };
 export default Keyview;

@@ -16,7 +16,6 @@ import FolderDeleteIcon from '@mui/icons-material/FolderDelete';
 import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-//import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import FolderZipIcon from '@mui/icons-material/FolderZip';
@@ -24,6 +23,7 @@ import { motion } from 'framer-motion';
 import { Notify } from '../utils/Notification';
 import IncludeModal from './IncludeModal'; // Import the modal component
 import ExcludeModal from './ExcludeModal';
+import AlertDialog from './Alert';
 import '../css/folderview.css';
 import hashSHA256 from '../utils/hash';
 
@@ -33,7 +33,12 @@ const FolderView = ({ folder, setStateChange }) => {
   const [excludeAnchorEl, setExcludeAnchorEl] = useState(null); // State for exclude sub-menu
   const [excludeType, setExcludeType] = useState(''); // State to store the exclude type
   const [modalOpen, setModalOpen] = useState(false);
+  const [itemobj, setItemobj] = useState({});
   const [modalEOpen, setModalEOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpenB, setDialogOpenB] = useState(false);
+  const [dialogOpenC, setDialogOpenC] = useState(false);
+
   const [includeType, setIncludeType] = useState(''); // State to store the include type
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
@@ -48,6 +53,11 @@ const FolderView = ({ folder, setStateChange }) => {
 
   const handleIncludeMenuOpen = event => {
     setIncludeAnchorEl(event.currentTarget);
+  };
+
+  const handleOpenDialog = () => {
+    handleMenuClose();
+    setDialogOpen(true);
   };
 
   const handleIncludeMenuClose = () => {
@@ -65,7 +75,7 @@ const FolderView = ({ folder, setStateChange }) => {
   const handleDelete = async () => {
     try {
       const response = await axios.delete(
-        `${base}/Api/v1/folders/${folder.id}`,
+        `${base}/Api/v1/folders/${folder.id}/remove`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -101,17 +111,35 @@ const FolderView = ({ folder, setStateChange }) => {
       const response = await axios.get(
         `${base}/Api/v1/folders/${folder.id}/download`,
         {
+          responseType: 'blob',
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
+      console.log('Response:', response);
+      console.log('Response type:', response.type);
+      console.log('Response headers:', response.headers);
+      // Convert the response to a Blob
+      //const blob = await response.blob();
+      const blob = new Blob([response.data], { type: 'application/zip' });
+
+      // Create a URL for the blob and simulate a click to download the file
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${folder.foldername}.zip`; // Set the download filename
+      document.body.appendChild(link);
+      link.click();
+      link.remove(); // Clean up the link element
+
+      // Revoke the object URL after the download
+      window.URL.revokeObjectURL(downloadUrl);
       console.log(response.data);
     } catch (error) {
       console.log(error);
     }
-
-    handleMenuClose();
+    setDialogOpen(false);
   };
 
   const handleOpen = () => {
@@ -133,11 +161,58 @@ const FolderView = ({ folder, setStateChange }) => {
     handleMenuClose();
   };
 
-  const handleSelectExclude = async item => {
-    console.log(item);
+  const handleExcludeNo = () => {
+    setExcludeType('');
+    setDialogOpenB(false);
+  };
+
+  const handleOpenDel = () => {
+    handleMenuClose();
+    setDialogOpenC(true);
+  };
+
+  const handleExcludeDialog = item => {
+    setItemobj(item);
+    setModalEOpen(false);
+    setDialogOpenB(true);
+  };
+
+  const handleSelectExclude = async () => {
+    console.log(itemobj);
+    try {
+      const response = await axios.delete(
+        `${base}/Api/v1/folders/${itemobj.fx.id}/exclude`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      Notify({ message: response.data.message, type: 'success' });
+      setExcludeType('');
+      setStateChange(true);
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.msg === 'Token has expired') {
+          navigate('/');
+        } else {
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
+        }
+      } else {
+        Notify({
+          message: `${error.message}`,
+          type: 'error',
+        });
+      }
+    } finally {
+      setDialogOpenB(false);
+    }
   };
 
   const handleSelect = async item => {
+    console.log(item, '====>');
     const getPayLoad = async () => {
       const payload = {
         parent_folder_id: folder.id,
@@ -158,7 +233,7 @@ const FolderView = ({ folder, setStateChange }) => {
         if (item.fileBlob && item.fileBlob.type.startsWith('image/')) {
           // Since it's an image, we just send the ID and the existing hash
           payload.hash = item.hash;
-        } else {
+        } else if (item.fileBlob) {
           // If it's a non-image file (e.g., text file), we read the content
           try {
             const fileContent = await new Promise((resolve, reject) => {
@@ -184,6 +259,11 @@ const FolderView = ({ folder, setStateChange }) => {
           } catch (error) {
             throw new Error('File processing failed');
           }
+        } else if (item.new) {
+          payload.content = '';
+          payload.name = item.name;
+          payload.blank = item.new;
+          delete payload[`${includeType.toLowerCase()}_id`];
         }
       } else if (includeType === 'Folder') {
         console.log('folder');
@@ -305,7 +385,7 @@ const FolderView = ({ folder, setStateChange }) => {
               <div className="menuitem">Exclude</div>
             </MenuItem>
 
-            <MenuItem onClick={handleDownload}>
+            <MenuItem onClick={handleOpenDialog}>
               <FolderZipIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
@@ -326,7 +406,7 @@ const FolderView = ({ folder, setStateChange }) => {
               <div className="menuitem">Open </div>
             </MenuItem>
 
-            <MenuItem onClick={handleDelete}>
+            <MenuItem onClick={handleOpenDel}>
               <FolderDeleteIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
@@ -391,13 +471,38 @@ const FolderView = ({ folder, setStateChange }) => {
         handleClose={() => setModalOpen(false)}
         includeType={includeType}
         onSelect={handleSelect}
+        setModalOpen={setModalOpen}
       />
       <ExcludeModal
         open={modalEOpen}
         handleClose={() => setModalEOpen(false)}
         excludeType={excludeType}
-        onSelect={handleSelectExclude}
+        onSelect={handleExcludeDialog}
         folderId={folder.id}
+      />
+      <AlertDialog
+        title={'Download'}
+        message={`Download ${folder.foldername} and all its content ?`}
+        handleYes={handleDownload}
+        handleNo={() => setDialogOpen(false)}
+        open={dialogOpen}
+        handleClose={() => setDialogOpen(false)}
+      />
+      <AlertDialog
+        title={'Delete Folder and Content'}
+        message={`Delete ${itemobj ? itemobj.foldername : 'FOLD'} and Contents of ${itemobj ? itemobj.foldername : 'FOLD'} from ${folder.foldername} `}
+        handleYes={handleSelectExclude}
+        handleNo={handleExcludeNo}
+        open={dialogOpenB}
+        handleClose={() => setDialogOpenB(false)}
+      />
+      <AlertDialog
+        title={'Delete Folder and Content'}
+        message={`Delete ${folder.foldername} and it's contents`}
+        handleYes={handleDelete}
+        handleNo={() => setDialogOpenC(false)}
+        open={dialogOpenC}
+        handleClose={() => setDialogOpenC(false)}
       />
     </motion.div>
   );

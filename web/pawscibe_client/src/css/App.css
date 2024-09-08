@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Pacifico&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Sevillana&display=swap');
 
+
 .App {
   text-align: center;
   min-height: 100%;
@@ -20,6 +21,13 @@
 .iconImage{
   height: 5vh;
 
+}
+
+.card{
+
+  box-sizing: border-box;
+  height: 50vh;
+  overflow: scroll
 }
 
 /*

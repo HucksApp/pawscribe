@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 from db.models.file import File
+from db.models.folderfxs import FolderFxS
+from db.models.folder import Folder
 from Api.__init__ import db
 from ..utils.required import token_required
 from ..utils.allowed import allowed_file
@@ -81,6 +83,11 @@ def delete_file(current_user, file_id):
     file = File.query.get_or_404(file_id)
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
+        return jsonify(msg), 403
+    existing_fxs =  FolderFxS.query.filter_by(file_id=file_id).first()
+    if existing_fxs:
+        parent_folder =  Folder.query.get_or_404(existing_fxs.parent_id)
+        msg.update({'message': f'Exclude this File from Folder {parent_folder.foldername}'})
         return jsonify(msg), 403
     db.session.delete(file)
     db.session.commit()

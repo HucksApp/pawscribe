@@ -1,51 +1,67 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, createSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import {
-  Grid,
-  Card,
-  CardContent,
-  Typography /*IconButton*/,
-} from '@mui/material';
-import FolderIcon from '@mui/icons-material/Folder';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { Grid } from '@mui/material';
+import File from './File';
+import Folder from './Folder';
+import Text from './Text';
 
-const OpenFolderList = ({ /*folder,*/ files, subfolders }) => {
+const OpenFolderList = ({
+  setStateChange,
+  stateChanged,
+  searchValue,
+  files,
+  texts,
+  subfolders,
+}) => {
   const navigate = useNavigate();
+  console.log(searchValue, stateChanged);
 
-  const handleOpenFolder = subfolder => {
-    navigate(`/openFolder?folderId=${subfolder.id}`);
+  const handleOpenFile = file => {
+    const url = URL.createObjectURL(file.blob);
+    const params = { id: file.id, src: url };
+    navigate(`/viewfile?${createSearchParams(params)}`);
   };
 
   return (
-    <Grid container spacing={2}>
-      {subfolders.map(subfolder => (
-        <Grid item xs={3} key={subfolder.id}>
-          <Card onClick={() => handleOpenFolder(subfolder)}>
-            <CardContent>
-              <FolderIcon style={{ fontSize: 50 }} />
-              <Typography variant="h6">{subfolder.foldername}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-      {files.map(file => (
-        <Grid item xs={3} key={file.id}>
-          <Card>
-            <CardContent>
-              <InsertDriveFileIcon style={{ fontSize: 50 }} />
-              <Typography variant="h6">{file.filename}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
+    <Grid container spacing={3}>
+      {' '}
+      {/* Add spacing between grid items */}
+      {subfolders &&
+        subfolders.map(subfolder => (
+          <Grid item xs={6} sm={4} md={3} lg={2} key={subfolder.id}>
+            {/* Responsive grid layout for folders */}
+            <Folder folder={subfolder} setStateChange={setStateChange} />
+          </Grid>
+        ))}
+      {files &&
+        files.map(file => (
+          <Grid item xs={6} sm={4} md={3} lg={2} key={file.id}>
+            {/* Responsive grid layout for files */}
+            <File
+              file={file}
+              handleOpenFile={handleOpenFile}
+              setStateChange={setStateChange}
+            />
+          </Grid>
+        ))}
+      {texts &&
+        texts.map(text => (
+          <Grid itemitem xs={6} sm={4} md={3} lg={2} key={text.id}>
+            {/* Responsive grid layout for texts */}
+            <Text text={text} setStateChange={setStateChange} />
+          </Grid>
+        ))}
     </Grid>
   );
 };
 
 OpenFolderList.propTypes = {
-  folder: PropTypes.object.isRequired,
+  setStateChange: PropTypes.func.isRequired,
+  stateChanged: PropTypes.bool.isRequired,
   files: PropTypes.array.isRequired,
+  texts: PropTypes.array.isRequired,
+  searchValue: PropTypes.string.isRequired,
   subfolders: PropTypes.array.isRequired,
 };
 

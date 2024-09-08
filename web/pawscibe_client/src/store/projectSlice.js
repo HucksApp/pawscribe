@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getWithExpiry, setWithExpiry } from './cache';
+import Cache from './cache';
 
 const initialProjectState = {
   fx: {}, // Metadata about the project folder
@@ -16,7 +16,7 @@ const projectSlice = createSlice({
   initialState: initialProjectState,
   reducers: {
     setProject(state, action) {
-      setWithExpiry('project', action.payload, 10800000); // 3-hour TTL
+      Cache.setWithExpiry('project', action.payload, 10800000); // 3-hour TTL
       return action.payload;
     },
     updateProject(state, action) {
@@ -33,7 +33,7 @@ const projectSlice = createSlice({
       };
 
       const newState = updateTree(state, id, data);
-      setWithExpiry('project', newState, 10800000);
+      Cache.setWithExpiry('project', newState, 10800000);
       return newState;
     },
     addChildToProject(state, action) {
@@ -52,7 +52,7 @@ const projectSlice = createSlice({
       };
 
       const newState = addChild(state, parentId, child);
-      setWithExpiry('project', newState, 10800000);
+      Cache.setWithExpiry('project', newState, 10800000);
       return newState;
     },
     removeChildFromProject(state, action) {
@@ -72,11 +72,11 @@ const projectSlice = createSlice({
       };
 
       const newState = removeChild(state, childId);
-      setWithExpiry('project', newState, 10800000);
+      Cache.setWithExpiry('project', newState, 10800000);
       return newState;
     },
     loadProjectFromCache(state) {
-      const cachedProject = getWithExpiry('project');
+      const cachedProject = Cache.getWithExpiry('project');
       return cachedProject ? cachedProject : state;
     },
     clearProject() {

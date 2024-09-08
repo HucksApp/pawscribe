@@ -11,41 +11,44 @@ import '../css/dashboard.css';
 
 const Dashboard = ({ stateChanged, setStateChange }) => {
   const [searchValue, setSearchValue] = useState('');
+
   const texts = useSelector(state => state.texts);
   const files = useSelector(state => state.files);
   const folders = useSelector(state => state.folders);
   const projects = useSelector(state => state.projects);
+
   useEffect(() => {}, [texts, files, folders, projects]);
 
-  //const projects = useSelector(state => state.projects);
+  const isEmptyContent = [files, texts, folders, projects].every(
+    list => Array.isArray(list) && list.length === 0
+  );
 
   return (
     <div className="dashboard">
       <Appbar setSearchValue={setSearchValue} />
 
-      {[files, texts, folders, projects].every(
-        list => list && Array.isArray(list) && list.length < 1
-      ) ? (
+      {isEmptyContent ? (
         <NoContent msg={'No Folder, Files, or script present'} />
       ) : (
-        <p className="hidden"></p>
-        //{/*<NoContent msg={'No Folder, Files, or script present'} />*/ }
+        <>
+          <FileList
+            searchValue={searchValue}
+            setStateChange={setStateChange}
+            stateChanged={stateChanged}
+          />
+          <TextList
+            searchValue={searchValue}
+            setStateChange={setStateChange}
+            stateChanged={stateChanged}
+          />
+          <FolderList
+            searchValue={searchValue}
+            setStateChange={setStateChange}
+            stateChanged={stateChanged}
+          />
+        </>
       )}
-      <FileList
-        searchValue={searchValue}
-        setStateChange={setStateChange}
-        stateChanged={stateChanged}
-      />
-      <TextList
-        searchValue={searchValue}
-        setStateChange={setStateChange}
-        stateChanged={stateChanged}
-      />
-      <FolderList
-        searchValue={searchValue}
-        setStateChange={setStateChange}
-        stateChanged={stateChanged}
-      />
+
       <Footer />
     </div>
   );

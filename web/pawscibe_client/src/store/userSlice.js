@@ -1,22 +1,22 @@
 // src/store/userSlice.js
 import { createSlice } from '@reduxjs/toolkit';
-import { getWithExpiry, setWithExpiry, clearAllWithPrefix } from './cache';
+import Cache from './cache';
 
 const userSlice = createSlice({
   name: 'user',
-  initialState: getWithExpiry('user') || null, // Load initial state from cache if available
+  initialState: Cache.getWithExpiry('user') || null, // Load initial state from cache if available
   reducers: {
     setUser(state, action) {
-      setWithExpiry('user', action.payload, 10800000); // 1 day TTL
+      Cache.setWithExpiry('user', action.payload, 10800000); // 1 day TTL
       return action.payload;
     },
     clearUser() {
-      clearAllWithPrefix('all');
+      Cache.clearAllWithPrefix('all');
       return null;
     },
 
     loadUserFromCache() {
-      return getWithExpiry('user') || null;
+      return Cache.getWithExpiry('user') || null;
     },
   },
 });

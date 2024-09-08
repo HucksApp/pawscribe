@@ -1,19 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getWithExpiry, setWithExpiry } from './cache';
+import Cache from './cache';
 
 const fileBlobSlice = createSlice({
   name: 'fileBlobs',
   initialState: [],
   reducers: {
     setFileBlobs(state, action) {
-      setWithExpiry('fileBlobs', action.payload, 10800000);
+      Cache.setWithExpiry('fileBlobs', action.payload, 10800000);
       return action.payload;
     },
     addFileBlob(state, action) {
       const fileBlobExists = state.find(blob => blob.id === action.payload.id);
       if (!fileBlobExists) {
         const newState = [...state, action.payload];
-        setWithExpiry('fileBlobs', newState, 10800000);
+        Cache.setWithExpiry('fileBlobs', newState, 10800000);
         return newState;
       }
       fileBlobExists.blob = action.payload.blob;
@@ -21,19 +21,19 @@ const fileBlobSlice = createSlice({
     },
     removeFileBlob(state, action) {
       const newState = state.filter(blob => blob.id !== action.payload);
-      setWithExpiry('fileBlobs', newState, 10800000);
+      Cache.setWithExpiry('fileBlobs', newState, 10800000);
       return newState;
     },
     updateFileBlob(state, action) {
       const index = state.findIndex(blob => blob.id === action.payload.id);
       if (index !== -1) {
         state[index] = action.payload;
-        setWithExpiry('fileBlobs', state, 10800000);
+        Cache.setWithExpiry('fileBlobs', state, 10800000);
       }
       return state;
     },
     loadFileBlobsFromCache(state) {
-      const cachedBlobs = getWithExpiry('fileBlobs');
+      const cachedBlobs = Cache.getWithExpiry('fileBlobs');
       return cachedBlobs ? cachedBlobs : state;
     },
   },

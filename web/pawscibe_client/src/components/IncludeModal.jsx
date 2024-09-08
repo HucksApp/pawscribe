@@ -16,15 +16,23 @@ const style = {
   p: 4,
 };
 
-const IncludeModal = ({ open, handleClose, includeType, onSelect }) => {
+const IncludeModal = ({
+  open,
+  handleClose,
+  includeType,
+  onSelect,
+  setModalOpen,
+}) => {
   const renderContent = () => {
     switch (includeType) {
       case 'Folder':
-        return <FolderInclude onSelect={onSelect} />;
+        return (
+          <FolderInclude setModalOpen={setModalOpen} onSelect={onSelect} />
+        );
       case 'File':
-        return <FileInclude onSelect={onSelect} />;
+        return <FileInclude setModalOpen={setModalOpen} onSelect={onSelect} />;
       case 'Text':
-        return <TextInclude onSelect={onSelect} />;
+        return <TextInclude setModalOpen={setModalOpen} onSelect={onSelect} />;
       default:
         return null;
     }
@@ -42,6 +50,7 @@ IncludeModal.propTypes = {
   handleClose: PropTypes.func.isRequired,
   includeType: PropTypes.string.isRequired,
   onSelect: PropTypes.func.isRequired,
+  setModalOpen: PropTypes.func.isRequired,
 };
 
 export default IncludeModal;
