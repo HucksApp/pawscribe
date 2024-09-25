@@ -1,3 +1,9 @@
+"""
+Clean up procedures related to application routes and container management upon app termination or client disconnect.
+
+- This module manages socket connection events, container cleanup, and ensures graceful shutdown of resources when the app is terminated or reloaded.
+"""
+
 from flask import Blueprint, request, jsonify, send_file
 from flask_socketio import emit
 from db.models.file import File
@@ -5,63 +11,54 @@ from db.models.text import Text
 from db.models.folder import Folder
 from db.models.folderfxs import FolderFxS
 from Api.__init__ import db, socketio
-from ..utils.required import token_required
-from io import BytesIO
-from datetime import datetime
-import subprocess
-import os
-import tempfile
-import shutil
+import atexit
+import signal
+from ..store.manager import container_manager
 
 
-socketio.on('execute_code')
+@socketio.on('connect')
+def handle_connect():
+    """
+    Handles client connections to the SocketIO server.
+
+    - When a client connects, this event is triggered.
+    - The client's session ID (request.sid) is logged for tracking purposes.
+    """
+    print('Client connected -> [id]: {}'.format(request.sid))
 
 
-@token_required
-def handle_execute_code(current_user, data):
-    language = data.get('language')
-    code = data.get('code')
-    folder_id = data.get('folder_id')
-    folder = Folder.query.get_or_404(folder_id)
-    if folder.owner_id != current_user.id:
-        emit(
-            'execution_result', {
-                'message': 'Permission denied', 'valid': False})
-        return
+def cleanup_on_exit():
+    """
+    Cleanup function for container management upon application exit.
 
-    result = run_code(language, code)
-    emit('execution_result', {'result': result, 'valid': True})
+    - This function is registered with atexit to ensure that containers managed by the app are cleaned up properly when the application exits.
+    - Ensures that no containers are left running when the app is terminated.
+    """
+    container_manager.cleanup_containers()
+    print("App cleanup completed.")
 
 
-def run_code(language, code):
-    temp_dir = tempfile.mkdtemp()
-    try:
-        if language == 'python':
-            file_path = os.path.join(temp_dir, 'script.py')
-            with open(file_path, 'w') as f:
-                f.write(code)
-            result = subprocess.run(
-                ['python3', file_path], capture_output=True, text=True)
-        elif language == 'c':
-            file_path = os.path.join(temp_dir, 'program.c')
-            with open(file_path, 'w') as f:
-                f.write(code)
-            binary_path = os.path.join(temp_dir, 'program')
-            compile_result = subprocess.run(
-                ['gcc', file_path, '-o', binary_path], capture_output=True, text=True)
-            if compile_result.returncode != 0:
-                return compile_result.stderr
-            result = subprocess.run(
-                [binary_path], capture_output=True, text=True)
-        elif language == 'javascript':
-            file_path = os.path.join(temp_dir, 'script.js')
-            with open(file_path, 'w') as f:
-                f.write(code)
-            result = subprocess.run(
-                ['node', file_path], capture_output=True, text=True)
-        else:
-            return 'Unsupported language'
+def handle_signal(signal, frame):
+    """
+    Handle system termination signals (SIGINT, SIGTERM) for graceful cleanup.
 
-        return result.stdout if result.returncode == 0 else result.stderr
-    finally:
-        shutil.rmtree(temp_dir)
+    - When a termination signal is received, this function ensures that all containers are cleaned up, and the SocketIO server is properly stopped.
+    - Terminates the app gracefully to avoid resource leakage.
+
+    Args:
+        signal (int): The signal number (e.g., SIGINT or SIGTERM).
+        frame (frame): The current stack frame when the signal was received.
+    """
+    print(f"Signal {signal} received, cleaning up...")
+    container_manager.cleanup_containers()
+    socketio.stop()  # Stop the socketio server if necessary
+    exit(0)
+
+
+# Register signal handlers to handle app reload or termination signals.
+# When SIGINT or SIGTERM signals are received, the handle_signal function is called.
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
+
+# Register the cleanup_on_exit function to ensure proper cleanup when the app exits normally.
+atexit.register(cleanup_on_exit)

@@ -1,4 +1,11 @@
-# api/routes/text.py
+"""
+Module: text_bp
+This module provides the functionality to handle text sharing, retrieval, 
+and manipulation via a Flask blueprint. It supports operations such as 
+creating, retrieving, updating, and deleting text entries, as well as 
+socket-based real-time interactions for collaborative editing. 
+"""
+
 from flask import Blueprint, request, jsonify
 from flask_socketio import emit, join_room, leave_room
 from Api import db, socketio
@@ -11,33 +18,47 @@ from ..utils.allowed import allowed_file
 from io import BytesIO
 from datetime import datetime
 import subprocess
+
 text_bp = Blueprint('text', __name__, url_prefix='text')
 
 
 @text_bp.route('/share', methods=['POST'])
 @token_required
 def share_text(current_user):
+    """
+    Share a new text or update an existing one.
 
+    Parameters:
+    - current_user: The authenticated user making the request.
+
+    Request Body:
+    - text_content (str): The content of the text to be shared.
+    - file_type (str): The type of the file (e.g., 'markdown', 'text').
+    - private (bool, optional): Indicates whether the text is private. Default is True.
+
+    Returns:
+    - JSON response with the status of the operation:
+        - 201 if text is successfully shared/updated.
+        - 409 if a text with the same content already exists.
+    """
     msg = {"message": "", "valid": False}
     data = request.get_json()
-    print(data)
     text_content = data.get('text_content')
     file_type = data.get('file_type')
     private = data.get('private', True)
     shared_with_key = token_urlsafe(8) if private else None
     text_hash = Text.generate_hash(text_content)
-    # verify if file exists with same content
+
     existing_text = Text.query.filter_by(hash=text_hash).first()
     if existing_text:
         if existing_text.private == private and existing_text.file_type == file_type:
             msg.update(
-                ({'message': 'Text already exists', 'text_id': existing_text.id}))
+                {'message': 'Content Dublication, Script exists', 'text_id': existing_text.id})
             return jsonify(msg), 409
         else:
             existing_text.private = private
             existing_text.file_type = file_type
-            existing_text. shared_with_key = shared_with_key
-#           db.session.commit()
+            existing_text.shared_with_key = shared_with_key
     else:
         new_text = Text(
             content=text_content,
@@ -46,6 +67,7 @@ def share_text(current_user):
             private=private,
             shared_with_key=shared_with_key)
         db.session.add(new_text)
+
     text_id = existing_text.id if existing_text else new_text.id
     db.session.commit()
     msg.update({'message': 'Text shared', 'valid': True,
@@ -56,12 +78,24 @@ def share_text(current_user):
 @text_bp.route('/<int:text_id>', methods=['GET'])
 @token_required
 def get_text(current_user, text_id):
+    """
+    Retrieve a specific text by its ID.
+
+    Parameters:
+    - current_user: The authenticated user making the request.
+    - text_id (int): The ID of the text to retrieve.
+
+    Returns:
+    - JSON response with the text content if found:
+        - 200 on success.
+        - 403 if the user does not have permission to access the text.
+    """
     msg = {"message": "", "valid": False}
     text = Text.query.get_or_404(text_id)
     if text.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    msg.update({'message': 'text retrieved',
+    msg.update({'message': 'Text retrieved',
                 'content': text.content,
                 'valid': True,
                 'file_type': text.file_type,
@@ -72,19 +106,66 @@ def get_text(current_user, text_id):
 @text_bp.route('/all', methods=['GET'])
 @token_required
 def list_texts(current_user):
-    texts = Text.query.filter_by(owner_id=current_user.id).all()
-    return jsonify([text.to_dict() for text in texts]), 200
+    """
+    List all texts owned by the current user with pagination.
+
+    Parameters:
+    - current_user: The authenticated user making the request.
+
+    Query Parameters:
+    - page (int, optional): The page number for pagination. Default is 1.
+    - per_page (int, optional): Number of texts per page. Default is 10.
+
+    Returns:
+    - JSON response containing the texts and pagination information:
+        - 200 on success.
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    pagination = Text.query.filter_by(owner_id=current_user.id).paginate(
+        page=page, per_page=per_page, error_out=True)
+    public_count = Text.query.filter_by(
+        owner_id=current_user.id, private=False).count()
+    private_count = Text.query.filter_by(
+        owner_id=current_user.id, private=True).count()
+    texts = pagination.items
+    result = {
+        "texts": [text.to_dict() for text in texts],
+        "publicCount": public_count,
+        "privateCount": private_count,
+        "total": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "pages": pagination.pages,
+        "has_next": pagination.has_next,
+        "has_prev": pagination.has_prev
+    }
+    return jsonify(result), 200
 
 
 @text_bp.route('/shared/<int:text_id>', methods=['GET'])
 def get_shared_text(text_id):
+    """
+    Retrieve a shared text by its ID using a shared key.
+
+    Parameters:
+    - text_id (int): The ID of the text to retrieve.
+
+    Query Parameters:
+    - key (str): The shared key for accessing the text.
+
+    Returns:
+    - JSON response with the text content if found:
+        - 200 on success.
+        - 403 if permission is denied.
+    """
     msg = {"message": "", "valid": False}
     shared_with_key = request.args.get('key')
     text = Text.query.get_or_404(text_id)
     if text.private and text.shared_with_key != shared_with_key:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    msg.update({'message': 'text retrieved', 'content': text.content,
+    msg.update({'message': 'Text retrieved', 'content': text.content,
                'valid': True, 'file_type': text.file_type})
     return jsonify(msg), 200
 
@@ -92,6 +173,18 @@ def get_shared_text(text_id):
 @text_bp.route('/<int:text_id>', methods=['DELETE'])
 @token_required
 def delete_text(current_user, text_id):
+    """
+    Delete a specific text by its ID.
+
+    Parameters:
+    - current_user: The authenticated user making the request.
+    - text_id (int): The ID of the text to delete.
+
+    Returns:
+    - JSON response indicating the status of the operation:
+        - 200 on success.
+        - 403 if the user does not have permission to delete the text.
+    """
     msg = {"message": "", "valid": False}
     text = Text.query.get_or_404(text_id)
     if text.owner_id != current_user.id:
@@ -106,200 +199,121 @@ def delete_text(current_user, text_id):
 @text_bp.route('/to_file/<int:text_id>', methods=['POST'])
 @token_required
 def save_text_to_file(current_user, text_id):
+    """
+    Save a specific text's content to a file.
+
+    Parameters:
+    - current_user: The authenticated user making the request.
+    - text_id (int): The ID of the text to save.
+
+    Request Body:
+    - filename (str, optional): The name of the file to save.
+    - extension (str, optional): The extension of the file.
+
+    Returns:
+    - JSON response indicating the status of the operation:
+        - 200 on success.
+        - 409 if the file already exists.
+        - 422 if the file extension is missing.
+        - 403 if the user does not have permission to save the text.
+    """
     msg = {"message": "", "valid": False}
     data = request.get_json()
     filename = data.get('filename') if 'filename' in data else None
-    extension = data.get('extension') if 'extension' in data else None
+    extension = data.get('extension') if 'extension' in data else f".{
+        filename.split('.')[-1]}"
+
     if not extension:
         msg.update({'message': "file extension is required (type)"})
         return jsonify(msg), 422
+
     text: Text = Text.query.get_or_404(text_id)
     if text.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
+
     if not filename:
         filename = unique_name(extension, filename)
-    print(text.content)
+
     if allowed_file(f'{filename}{extension}', msg):
-        file_hash = File.generate_hash(text.content.strip().encode('utf-8'))
+        file_hash = File.generate_hash(text.content.encode('utf-8'))
         existing_file = File.query.filter_by(hash=file_hash).first()
         if existing_file:
-            print("hereeeeeeeeeeee")
-            msg.update({'message': 'File already exists',
-                       'file_id': existing_file.id})
+            msg.update({'message': f'Content Dublication, File exist as {
+                       existing_file.filename}', 'file_id': existing_file.id})
             return jsonify(msg), 409
-    elif msg != "":
-        return jsonify(msg), 409
-    file = File(
-        filename=f'{filename}{extension}',
-        owner_id=current_user.id,
-        data=text.content.encode('utf-8'))
-    text.file_id = file.id
-    db.session.add(file)
-    db.session.commit()
-    return jsonify(msg), 200
+        elif msg['message'] != "":
+            return jsonify(msg), 409
 
-
-@text_bp.route('/private/<int:text_id>', methods=['GET'])
-@token_required
-def private_text(current_user, text_id):
-    msg = {"message": "", "valid": False}
-    text: Text = Text.query.get_or_404(text_id)
-    print(text.private, '111')
-    if text.owner_id != current_user.id:
-        msg.update({'message': 'Permission denied'})
-        return jsonify(msg), 403
-    if text.private:
-        text.private = False
-        text.shared_with_key = None
-    else:
-        text.private = True
-    text.updated_at = datetime.now()
-    print(text.private, '222')
-    db.session.commit()
-    msg.update({"message": f"Script Set To {'Private' if text.private else 'Public'}",
-               "valid": True, "text_id": text.id})
-    return jsonify(msg), 200
-
-
-@text_bp.route('/execute', methods=['POST'])
-@token_required
-def execute_code(current_user):
-    code = request.json.get('code')
-    language = request.json.get('language')
-    msg = {"message": "", "valid": False}
-
-    if not code or not language:
-        msg.update({'message': 'Code and language are required'})
-        return jsonify(msg), 400
-
-    if language == 'python':
-        try:
-            result = subprocess.run(
-                ['python3', '-c', code], capture_output=True, text=True, check=True)
-            output = result.stdout
-        except subprocess.CalledProcessError as e:
-            output = e.stderr
-    elif language == 'javascript':
-        try:
-            result = subprocess.run(
-                ['node', '-e', code], capture_output=True, text=True, check=True)
-            output = result.stdout
-        except subprocess.CalledProcessError as e:
-            output = e.stderr
-    else:
-        msg.update({'message': 'Unsupported language'})
-        return jsonify(msg), 400
-    msg.update({'message': 'successful', 'output': output, 'valid': True})
-    return jsonify(msg), 200
-
-
-@socketio.on('join')
-@token_required
-def handle_join(current_user, data):
-    text_id = data['text_id']
-    join_room(text_id)
-    print(text_id)
-    emit('status', {'message': 'User has entered the room'},
-         room=text_id, broadcast=True)
-
-
-@socketio.on('leave')
-def handle_leave(data):
-    text_id = data['text_id']
-    leave_room(text_id)
-    emit('status', {'message': 'User has left the room'},
-         room=text_id, broadcast=True)
-
-
-@socketio.on('text_update')
-@token_required
-def handle_text_update(current_user, data):
-    msg = {"message": "", "valid": False}
-    text_id = data['text_id'] if 'text_id' in data else None
-    owner_id = data['owner_id']
-    if owner_id != current_user.id:
-        msg.update({"message": "permission denied", "status": 403})
-        emit('error', msg)
-        return
-    content = data['content'] if 'content' in data else None
-    msg.update({"message": "success", "status": 200,
-               'content': content, "valid": True})
-    emit('text_updated', msg, room=text_id, broadcast=True)
-
-
-@socketio.on('save_text')
-@token_required
-def handle_save_text(current_user, data):
-    msg = {"message": "", "valid": False}
-    text_id = data['text_id'] if 'text_id' in data else None
-    content = data['content'] if 'content' in data else None
-    file_type = data['file_type']
-    private = data['private'] if 'private' in data else False
-    shared_with_key = [
-        'shared_with_key'] if 'shared_with_key' in data else None
-    text = Text.query.get_or_404(text_id)
-    text_hash = Text.generate_hash(content)
-    existing_text = Text.query.filter_by(hash=text_hash).first()
-    if text:
-        text.content = content
-    elif existing_text:
-        existing_text.content = content
-    else:
-        new_text = Text(
-            content=content,
-            file_type=file_type,
+        file = File(
+            filename=f'{filename}{extension}',
+            content=text.content,
             owner_id=current_user.id,
-            private=private,
-            shared_with_key=shared_with_key)
-        db.session.add(new_text)
-    db.session.commit()
-    id = text.id if text else new_text.id
-    msg.update({'message': 'page saved', "valid": True,
-               "status": 200, "text_id": id})
-    emit('status', msg)
+            hash=file_hash
+        )
+        db.session.add(file)
+        db.session.commit()
+        msg.update({'message': 'File Saved',
+                   'valid': True, 'file_id': file.id})
+        return jsonify(msg), 201
+
+    return jsonify(msg), 409
 
 
-@socketio.on('save_textfd_to_file')
-@token_required
-def handle_save_textfd_to_file(current_user, data):
-    msg = {"message": "", "valid": False}
-    content = data['content']
-    file_name = data['file_name']
-    file_hash = File.generate_hash(content)
-    existing_file = File.query.filter_by(hash=file_hash).first()
-    if existing_file:
-        msg.update({'message': 'File already exists',
-                   'file_id': existing_file.id, "status": 409})
-        emit("error", msg)
-        return
-    new_file = File(filename=file_name, data=content, owner_id=current_user.id)
-    db.session.add(new_file)
-    db.session.commit()
-    msg.update({'message': 'File saved', 'valid': True,
-               "status": 200, "file_id": new_file.id})
-    emit("status", msg)
+@socketio.on('connect', namespace='/text')
+def text_connect():
+    """
+    Handle new socket connections for real-time interactions.
+
+    Returns:
+    - None
+    """
+    emit('response', {'message': 'Connected to text socket'})
 
 
-@socketio.on('load_text_from_file')
-@token_required
-def handle_load_text_from_file(current_user, data):
-    msg = {"message": "", "valid": False}
-    file_id = data['file_id']
-    file: File = File.query.get_or_404(file_id)
-    if file:
-        if current_user.id != file.owner_id:
-            msg.update({'message': 'Permission denied', "status": 403})
-            emit("error", msg)
-            return
-        content = BytesIO(file.data).read().decode("utf-8")
-        file_info = file.to_dict()
-        msg.update({**file_info,
-                    'message': 'success',
-                    "status": 200,
-                    "content": content,
-                    "valid": True})
-        emit("text_updated", msg, broadcast=True)
-    msg.update({"message": "File not found", "status": 404})
-    emit("error", msg)
-    # emit('status', {'message': 'User has left the room'}, room=text_id, broadcast=True)
+@socketio.on('join', namespace='/text')
+def text_join(data):
+    """
+    Join a specific room for real-time text collaboration.
+
+    Parameters:
+    - data: Contains the room ID to join.
+
+    Returns:
+    - None
+    """
+    room = data['room']
+    join_room(room)
+    emit('response', {'message': f'Joined room: {room}'}, room=room)
+
+
+@socketio.on('leave', namespace='/text')
+def text_leave(data):
+    """
+    Leave a specific room for real-time text collaboration.
+
+    Parameters:
+    - data: Contains the room ID to leave.
+
+    Returns:
+    - None
+    """
+    room = data['room']
+    leave_room(room)
+    emit('response', {'message': f'Left room: {room}'}, room=room)
+
+
+@socketio.on('send_text', namespace='/text')
+def send_text(data):
+    """
+    Send text data to a specific room for real-time collaboration.
+
+    Parameters:
+    - data: Contains the room ID and text content to send.
+
+    Returns:
+    - None
+    """
+    room = data['room']
+    text_content = data['text_content']
+    emit('response', {'text_content': text_content}, room=room)
