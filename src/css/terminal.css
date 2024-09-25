@@ -1,0 +1,50 @@
+.terminal {
+  color: #616161;
+  padding: 10px 10px 30px 10px;
+  height: 100%;
+  /*overflow-y: auto;*/
+  font-weight: 1000;
+  font-family: monospace;
+  box-sizing: border-box;
+  overflow: scroll;
+  scroll-behavior: smooth;
+}
+
+.terminal-output {
+  display: flex;
+  border: solid green;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-direction: column;
+  /**/ /* Preserve whitespace for formatting */
+}
+
+.terminal-input {
+  display: flex;
+  width: 605;
+}
+.terminal-history {
+  text-align: start;
+}
+
+.terminal-history {
+  white-space: pre-wrap;
+  width: auto;
+  border: solid red;
+}
+
+.terminal-history:hover {
+  border: solid thin #616161;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.terminal-input input {
+  background: none;
+  border: none;
+  color: #616161;
+  font-family: monospace;
+  font-weight: 1000;
+  flex: 1;
+  outline: none; /* Remove default focus outline */
+}

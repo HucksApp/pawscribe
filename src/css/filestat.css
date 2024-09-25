@@ -1,0 +1,102 @@
+.listcontainer {
+  padding: 0 1%;
+}
+
+.filestat {
+  display: flex;
+  flex-direction: column;
+  font-weight: 1000;
+  font-family: 'Raleway';
+  color: #616161;
+}
+
+.filestat > .head,
+.filestat > .typecover {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+.filestat > .head {
+  padding-top: 1%;
+}
+
+.filestat > .head div,
+.filestat > .typecover > div {
+  display: flex;
+  justify-content: flex-start;
+  padding-right: 5%;
+  padding-bottom: 1%;
+  align-items: center;
+}
+.filestat > .head div span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.total > *,
+.private > *,
+.public > * {
+  padding-right: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.span2,
+.div2 {
+  color: #1976d2;
+}
+
+.div1 {
+  padding-left: 2px;
+}
+
+.total,
+.total > *,
+.private,
+.private > *,
+.public > *,
+.public,
+.filetype,
+.filetype > * {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* .filestat.folderstat{
+    flex-direction: row;
+    border:  solid red;
+ } */
+
+.statcontainer {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-bottom: 5%;
+  padding-top: 2%;
+}
+
+.pagenav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  background-color: #616161;
+  flex: 1;
+}
+.pagenavstat {
+  font-weight: 800;
+  font-size: 1.2em;
+  font-family: 'Raleway';
+  color: #fcfcfc;
+}
+.statcontainer > .filestat {
+  flex: 2;
+  /* border: solid red; */
+}
+
+.span1 {
+  display: inline-block;
+  /* border:  solid red; */
+}
