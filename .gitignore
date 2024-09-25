@@ -1,5 +1,5 @@
-__pycache__/
-*__pycache__/
 db/db_instance/
 .env
-
+.venv
+.vscode
+.DS_Store
