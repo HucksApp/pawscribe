@@ -16,11 +16,10 @@ from db import db
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from .base import Base
-from flask_login import UserMixin
 import uuid
 
 
-class User(Base, UserMixin):
+class User(Base):
     __tablename__ = 'user'
 
     id = db.Column(db.String(36), primary_key=True,
