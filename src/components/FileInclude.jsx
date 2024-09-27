@@ -203,10 +203,13 @@ const FileInclude = ({ onSelect, setModalOpen }) => {
         {filteredFiles.map(file => (
           <Grid item xs={3} key={file.id}>
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 50 }}
-              transition={{ duration: 0.9 }}
+              initial={{ opacity: 0, x: 100 }} // Start from left (100px) with 0 opacity
+              animate={{ opacity: 1, x: 0 }} // Move to its position (x: 0) and full opacity
+              exit={{ opacity: 0, x: -100 }} // Exit by moving left (-100px) and fade out
+              transition={{
+                duration: 0.7, // Adjust the duration for a slow entry
+                ease: 'easeInOut', // Smooth ease-in and ease-out effect
+              }}
             >
               <IncludeCard icon={icon} file={file} onSelect={onSelect} />
             </motion.div>

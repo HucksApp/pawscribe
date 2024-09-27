@@ -48,7 +48,11 @@ const OpenFolderView = () => {
   };
 
   const handleSelect = async item => {
-    console.log(item, '====>');
+    console.log(
+      item,
+      `item ====>${item}\n`,
+      `include type ++++>${includeType}`
+    );
     const getPayLoad = async () => {
       const payload = {
         parent_folder_id: folder.id,
@@ -102,7 +106,7 @@ const OpenFolderView = () => {
           delete payload[`${includeType.toLowerCase()}_id`];
         }
       } else if (includeType === 'Folder') {
-        console.log('folder');
+        payload.name = item.name;
       }
 
       return payload;

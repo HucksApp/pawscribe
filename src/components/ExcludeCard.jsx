@@ -10,12 +10,23 @@ import PropTypes from 'prop-types';
 const ExcludeCard = ({ file, icon, onSelect }) => {
   return (
     <div>
-      <Card onClick={() => onSelect(file)}>
+      <Card
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          '&:hover': {
+            opacity: 0.9,
+            cursor: 'pointer',
+          },
+        }}
+        onClick={() => onSelect(file)}
+      >
         <CardContent>
           {icon(file)}
           <Typography
             sx={{
-              fontSize: 25,
+              fontSize: 15,
               color: '#616161',
               fontFamily: 'Raleway',
               fontWeight: 1000,

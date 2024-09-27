@@ -29,7 +29,7 @@ import codeIcon from '../utils/codeIcon';
 import AlertDialog from './Alert';
 import '../css/fileview.css';
 
-const Text = ({ text, setStateChange, /*stateChanged,*/ handleOpenFile }) => {
+const Text = ({ text, setStateChange, stateChanged, handleOpenScript }) => {
   console.log(text);
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
@@ -226,25 +226,31 @@ const Text = ({ text, setStateChange, /*stateChanged,*/ handleOpenFile }) => {
 
   const handleYes = async () => {
     try {
-      const response = await axios.delete(`${base}/Api/v1/text/${text.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.delete(
+        `${base}/Api/v1/folders/${text.fx.id}/exclude`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setStateChange(!stateChanged);
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
-      if (
-        error.response.data.msg &&
-        error.response.data.msg == 'Token has expired'
-      )
-        navigate('/');
-      else
+      if (error.response) {
+        if (error.response.data.msg === 'Token has expired') {
+          navigate('/');
+        } else {
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
+        }
+      } else {
         Notify({
-          message: `${error.message}. ${error.response.data.message}`,
+          message: `${error.message}`,
           type: 'error',
         });
+      }
     }
-    setStateChange(true);
-    setDialogOpen(false);
-    handleMenuClose();
   };
 
   const handleEdit = () => {
@@ -278,7 +284,7 @@ const Text = ({ text, setStateChange, /*stateChanged,*/ handleOpenFile }) => {
             alignSelf: 'center',
           }}
         >
-          <div onClick={() => handleOpenFile(text)}>{icon(text)}</div>
+          <div onClick={() => handleOpenScript(text)}>{icon(text)}</div>
           <div className="filename">
             {' '}
             <div className="filetitle fname">
@@ -394,7 +400,7 @@ const Text = ({ text, setStateChange, /*stateChanged,*/ handleOpenFile }) => {
 Text.propTypes = {
   text: PropTypes.array.isRequired,
   setStateChange: PropTypes.func.isRequired,
-  handleOpenFile: PropTypes.func.isRequired,
+  handleOpenScript: PropTypes.func.isRequired,
   stateChanged: PropTypes.bool.isRequired,
 };
 

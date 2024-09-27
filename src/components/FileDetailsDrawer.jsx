@@ -6,7 +6,10 @@ import '../css/drawer.css';
 
 const FileDetailsDrawer = ({ file, onClose, open }) => {
   console.log(file, 'naaaaaaaa');
+
+  // Return null if no file object is passed
   if (!file) return null;
+
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <div className="iconDrawerClose">
@@ -16,7 +19,7 @@ const FileDetailsDrawer = ({ file, onClose, open }) => {
         <ListItem>
           <div className="listitem">
             <div className="itemtitle">Name</div>
-            <div className="itemvalue">{file && file.filename}</div>
+            <div className="itemvalue">{file?.filename || 'Unknown'}</div>
           </div>
         </ListItem>
         <Divider />
@@ -24,7 +27,9 @@ const FileDetailsDrawer = ({ file, onClose, open }) => {
           <div className="listitem">
             <div className="itemtitle">Created Date</div>
             <div className="itemvalue">
-              {file && new Date(file.created_at).toLocaleString()}
+              {file?.created_at
+                ? new Date(file.created_at).toLocaleString()
+                : 'N/A'}
             </div>
           </div>
         </ListItem>
@@ -33,7 +38,7 @@ const FileDetailsDrawer = ({ file, onClose, open }) => {
           <div className="listitem">
             <div className="itemtitle">Shared With Key</div>
             <div className="itemvalue">
-              {file.shared_with_key ? file.shared_with_key : 'NULL'}
+              {file?.shared_with_key ? file.shared_with_key : 'NULL'}
             </div>
           </div>
         </ListItem>
@@ -41,7 +46,9 @@ const FileDetailsDrawer = ({ file, onClose, open }) => {
         <ListItem>
           <div className="listitem">
             <div className="itemtitle">Private</div>
-            <div className="itemvalue">{file && file.private.toString()}</div>
+            <div className="itemvalue">
+              {file?.private !== undefined ? file.private.toString() : 'N/A'}
+            </div>
           </div>
         </ListItem>
         <Divider />
@@ -49,7 +56,9 @@ const FileDetailsDrawer = ({ file, onClose, open }) => {
           <div className="listitem">
             <div className="itemtitle">Created Date</div>
             <div className="itemvalue">
-              {file && new Date(file.created_at).toLocaleString()}
+              {file?.created_at
+                ? new Date(file.created_at).toLocaleString()
+                : 'N/A'}
             </div>
           </div>
         </ListItem>
@@ -58,7 +67,9 @@ const FileDetailsDrawer = ({ file, onClose, open }) => {
           <div className="listitem">
             <div className="itemtitle">Updated Date</div>
             <div className="itemvalue">
-              {file && new Date(file.updated_at).toLocaleString()}
+              {file?.updated_at
+                ? new Date(file.updated_at).toLocaleString()
+                : 'N/A'}
             </div>
           </div>
         </ListItem>

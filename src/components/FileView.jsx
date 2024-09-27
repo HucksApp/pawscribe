@@ -155,7 +155,7 @@ const FileView = ({ file, setStateChange }) => {
   };
 
   const handleOpen = () => {
-    const params = { id: file.id, src: iframeSrc };
+    const params = { id: file.id, type: 'File', src: iframeSrc };
     /* navigate({
             pathname: '/view',
             Search: `?${createSearchParams(params)}`
@@ -197,10 +197,13 @@ const FileView = ({ file, setStateChange }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 50 }}
-      transition={{ duration: 0.9 }}
+      initial={{ opacity: 0, x: 100 }} // Start from left (100px) with 0 opacity
+      animate={{ opacity: 1, x: 0 }} // Move to its position (x: 0) and full opacity
+      exit={{ opacity: 0, x: -100 }} // Exit by moving left (-100px) and fade out
+      transition={{
+        duration: 0.7, // Adjust the duration for a slow entry
+        ease: 'easeInOut', // Smooth ease-in and ease-out effect
+      }}
     >
       <div title={file.filename} className="card">
         <CardContent>
@@ -271,7 +274,7 @@ const FileView = ({ file, setStateChange }) => {
               <InfoIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
-              <div className="menuitem">File Details</div>
+              <div className="menuitem">View File</div>
             </MenuItem>
           </Menu>
         </CardActions>

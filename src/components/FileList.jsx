@@ -67,6 +67,10 @@ const FileList = ({ searchValue, stateChanged, setStateChange }) => {
           localStorage.removeItem('jwt_token');
           dispatch(clearUser());
           navigate('/');
+        } else if (error.message == 'Request failed with status code 401') {
+          localStorage.removeItem('jwt_token');
+          dispatch(clearUser());
+          navigate('/');
         } else
           Notify({
             message: `${error.message}. ${error.response.data.message} `,
@@ -145,8 +149,8 @@ const FileList = ({ searchValue, stateChanged, setStateChange }) => {
           />
         )}
         <Grid container spacing={3}>
+          <AddFile setStateChange={setStateChange} />
           <AnimatePresence>
-            <AddFile setStateChange={setStateChange} />
             {Array.isArray(filteredFiles) &&
               filteredFiles.length > 0 &&
               filteredFiles.map(file => (

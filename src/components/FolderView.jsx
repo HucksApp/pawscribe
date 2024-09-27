@@ -261,7 +261,7 @@ const FolderView = ({ folder, setStateChange }) => {
           delete payload[`${includeType.toLowerCase()}_id`];
         }
       } else if (includeType === 'Folder') {
-        console.log('folder');
+        payload.name = item.name;
       }
 
       return payload;
@@ -269,6 +269,7 @@ const FolderView = ({ folder, setStateChange }) => {
 
     try {
       const payload = await getPayLoad();
+      console.log(payload);
       const response = await axios.post(
         `${base}/Api/v1/folders/include`,
         payload,
@@ -303,10 +304,13 @@ const FolderView = ({ folder, setStateChange }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 50 }}
-      transition={{ duration: 0.9 }}
+      initial={{ opacity: 0, x: 100 }} // Start from right (100px) with 0 opacity
+      animate={{ opacity: 1, x: 0 }} // Move to its position (x: 0) and full opacity
+      exit={{ opacity: 0, x: -100 }} // Exit by moving left (-100px) and fade out
+      transition={{
+        duration: 0.7, // Adjust the duration for a slow entry
+        ease: 'easeInOut', // Smooth ease-in and ease-out effect
+      }}
     >
       <div title={folder.foldername} className="card">
         <FolderIcon

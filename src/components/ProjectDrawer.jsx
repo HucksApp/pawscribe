@@ -200,10 +200,12 @@ const getIconFromFileType = item => {
   console.log(item);
   switch (item.fx.type) {
     case 'File':
-      file_ext = item.filename.split('.').pop().toLowerCase();
+      if (item.fx.name) file_ext = item.fx.name.split('.').pop().toLowerCase();
+      else file_ext = item.filename.split('.').pop().toLowerCase();
       break;
     case 'Text':
-      file_ext = item.file_type;
+      if (item.fx.name) file_ext = item.fx.name.split('.').pop().toLowerCase();
+      else file_ext = item.file_type;
       break;
     case 'Folder':
       return FolderRounded;
@@ -334,7 +336,7 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
         const { fetchBlobContent, loading } = getFileContent(item);
         if (!loading) {
           const content = await fetchBlobContent(); // Fetch content from the server
-          setEditorContent(content || 'No content available');
+          setEditorContent(content || 'Empty !!!');
 
           // Update the dataQueue with the new file data
           setDataQueue(prevState => {

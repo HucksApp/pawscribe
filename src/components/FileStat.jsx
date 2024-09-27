@@ -121,7 +121,7 @@ const FileStats = ({
                 )}
                 {['jpg', 'png', 'gif', 'svg'].includes(type) && (
                   <ImageIcon
-                    sx={{ fontSize: 10, color: '#616161', fontWeight: 1000 }}
+                    sx={{ fontSize: 30, color: '#616161', fontWeight: 1000 }}
                   />
                 )}
                 {type !== 'pdf' &&

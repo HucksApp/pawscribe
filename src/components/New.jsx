@@ -48,7 +48,7 @@ const New = ({ type, onSelect, setModalOpen }) => {
         <InsertDriveFileIcon
           sx={{
             fontSize: 40,
-            color: '#616161',
+            color: '#e5e5e5',
             fontWeight: 1000,
           }}
         />
@@ -77,7 +77,7 @@ const New = ({ type, onSelect, setModalOpen }) => {
         <FolderIcon
           sx={{
             fontSize: 40,
-            color: '#616161',
+            color: '#e5e5e5',
             fontWeight: 1000,
           }}
         />
@@ -87,13 +87,25 @@ const New = ({ type, onSelect, setModalOpen }) => {
 
   return (
     <div className="">
-      <Card onClick={handleClickOpen}>
+      <Card
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          bgcolor: '#9c27b0',
+          '&:hover': {
+            opacity: 0.9,
+            cursor: 'pointer',
+          },
+        }}
+        onClick={handleClickOpen}
+      >
         <CardContent>
           {resolv(type)}
           <Typography
             sx={{
-              fontSize: 25,
-              color: '#616161',
+              fontSize: 15,
+              color: '#e5e5e5',
               fontFamily: 'Raleway',
               fontWeight: 1000,
             }}

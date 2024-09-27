@@ -49,7 +49,9 @@ const File = ({ file, setStateChange, stateChanged, handleOpenFile }) => {
   //const dispatch = useDispatch();
 
   const icon = file => {
-    const type = file.filename.split('.').pop();
+    const type = file.fx
+      ? file.fx.name.split('.').pop()
+      : file.filename.split('.').pop();
     switch (type) {
       case 'js':
       case 'ts':
@@ -68,7 +70,7 @@ const File = ({ file, setStateChange, stateChanged, handleOpenFile }) => {
         return (
           <FeedIcon
             sx={{
-              fontSize: 300,
+              fontSize: 100,
               color: '#616161',
               fontWeight: 1000,
               alignSelf: 'center',

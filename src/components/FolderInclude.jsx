@@ -11,8 +11,9 @@ import {
 import { useSelector } from 'react-redux';
 import FolderIcon from '@mui/icons-material/Folder';
 import { motion } from 'framer-motion';
+import New from './New';
 
-const FolderInclude = ({ onSelect }) => {
+const FolderInclude = ({ onSelect, setModalOpen }) => {
   const folders = useSelector(state => state.folders);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredFolders, setFilteredFolders] = useState([]);
@@ -27,15 +28,18 @@ const FolderInclude = ({ onSelect }) => {
 
   return (
     <div>
-      <TextField
-        label="Search Folders"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-        value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
-      />
+      <div className="bar">
+        <TextField
+          label="Search Folders"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+      </div>
       <Grid container spacing={2}>
+        <New type={'Folder'} setModalOpen={setModalOpen} onSelect={onSelect} />
         {filteredFolders.map(folder => (
           <Grid item xs={3} key={folder.id}>
             <motion.div
@@ -44,7 +48,18 @@ const FolderInclude = ({ onSelect }) => {
               exit={{ opacity: 0, x: 50 }}
               transition={{ duration: 0.9 }}
             >
-              <Card onClick={() => onSelect(folder)}>
+              <Card
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  '&:hover': {
+                    opacity: 0.9,
+                    cursor: 'pointer',
+                  },
+                }}
+                onClick={() => onSelect(folder)}
+              >
                 <CardContent>
                   <FolderIcon
                     sx={{
@@ -56,7 +71,7 @@ const FolderInclude = ({ onSelect }) => {
                   />
                   <Typography
                     sx={{
-                      fontSize: 25,
+                      fontSize: 15,
                       color: '#616161',
                       fontFamily: 'Raleway',
                       fontWeight: 1000,
@@ -77,6 +92,7 @@ const FolderInclude = ({ onSelect }) => {
 
 FolderInclude.propTypes = {
   onSelect: PropTypes.func.isRequired,
+  setModalOpen: PropTypes.func.isRequired,
 };
 
 export default FolderInclude;

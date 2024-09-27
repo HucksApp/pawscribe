@@ -9,12 +9,13 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, createSearchParams } from 'react-router-dom';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import DownloadIcon from '@mui/icons-material/Download';
 import EditIcon from '@mui/icons-material/Edit';
 import Groups2Icon from '@mui/icons-material/Groups2';
+import InfoIcon from '@mui/icons-material/Info';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import { motion } from 'framer-motion';
@@ -156,6 +157,13 @@ const TextView = ({ text, setStateChange }) => {
     setDialogOpen(true);
   };
 
+  const handleOpen = () => {
+    const params = { id: text.id, type: 'Text', src: iframeSrc };
+
+    navigate(`/viewfile?${createSearchParams(params)}`);
+    handleMenuClose();
+  };
+
   const handleNo = () => {
     setDialogOpen(false);
   };
@@ -200,10 +208,13 @@ const TextView = ({ text, setStateChange }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 50 }}
-      transition={{ duration: 0.9 }}
+      initial={{ opacity: 0, x: 100 }} // Start from right (100px) with 0 opacity
+      animate={{ opacity: 1, x: 0 }} // Move to its position (x: 0) and full opacity
+      exit={{ opacity: 0, x: -100 }} // Exit by moving left (-100px) and fade out
+      transition={{
+        duration: 0.7, // Adjust the duration for a slow entry
+        ease: 'easeInOut', // Smooth ease-in and ease-out effect
+      }}
     >
       <div className="card">
         <CardContent>
@@ -266,6 +277,12 @@ const TextView = ({ text, setStateChange }) => {
               ) : (
                 <div className="menuitem">Public</div>
               )}
+            </MenuItem>
+            <MenuItem onClick={handleOpen}>
+              <InfoIcon
+                sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
+              />
+              <div className="menuitem">View Script</div>
             </MenuItem>
           </Menu>
         </CardActions>

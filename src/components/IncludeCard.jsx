@@ -31,12 +31,24 @@ const IncludeCard = ({ file, icon, onSelect }) => {
 
   return (
     <div>
-      <Card onClick={() => onSelect({ ...file, fileBlob })}>
+      <Card
+        sx={{
+          display: 'flex',
+          //border: 'solid red',
+          justifyContent: 'center',
+          alignItems: 'center',
+          '&:hover': {
+            opacity: 0.9,
+            cursor: 'pointer',
+          },
+        }}
+        onClick={() => onSelect({ ...file, fileBlob })}
+      >
         <CardContent>
-          {icon(file)}
+          <div className="includecardImg">{icon(file)}</div>
           <Typography
             sx={{
-              fontSize: 25,
+              fontSize: 15,
               color: '#616161',
               fontFamily: 'Raleway',
               fontWeight: 1000,

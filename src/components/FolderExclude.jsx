@@ -98,7 +98,18 @@ const FolderExclude = ({ onSelect, folderId }) => {
               exit={{ opacity: 0, x: 50 }}
               transition={{ duration: 0.9 }}
             >
-              <Card onClick={() => onSelect(folder)}>
+              <Card
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  '&:hover': {
+                    opacity: 0.9,
+                    cursor: 'pointer',
+                  },
+                }}
+                onClick={() => onSelect(folder)}
+              >
                 <CardContent>
                   <FolderIcon
                     sx={{
@@ -110,7 +121,7 @@ const FolderExclude = ({ onSelect, folderId }) => {
                   />
                   <Typography
                     sx={{
-                      fontSize: 25,
+                      fontSize: 15,
                       color: '#616161',
                       fontFamily: 'Raleway',
                       fontWeight: 1000,

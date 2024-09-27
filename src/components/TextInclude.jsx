@@ -204,7 +204,18 @@ const TextInclude = ({ onSelect }) => {
               exit={{ opacity: 0, x: 50 }}
               transition={{ duration: 0.9 }}
             >
-              <Card onClick={() => onSelect(text)}>
+              <Card
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  '&:hover': {
+                    opacity: 0.9,
+                    cursor: 'pointer',
+                  },
+                }}
+                onClick={() => onSelect(text)}
+              >
                 <CardContent>
                   <div
                     style={{
@@ -216,7 +227,7 @@ const TextInclude = ({ onSelect }) => {
                     {icon(text)}
                     <Typography
                       sx={{
-                        fontSize: 25,
+                        fontSize: 10,
                         color: '#616161',
                         fontFamily: 'Raleway',
                         fontWeight: 1000,
