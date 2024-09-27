@@ -11,7 +11,8 @@ from ..utils.docker_env import create_docker_environment, execute_code, clean_up
 from ..utils.run_utility import determine_entry_point, clean_temp_dir
 from ..utils.required import token_required
 from ..store.manager import container_manager
-from ..utils.data_sync import handle_mkdir_command, handle_move_or_copy_command, handle_touch_command
+from db.models.folder import Folder
+from ..utils.data_sync import handle_mkdir_command, handle_move_or_copy_command, handle_touch_command, handle_rm_command
 import os
 import re
 
@@ -73,7 +74,6 @@ def handle_start_terminal(current_user, data):
             'type': container_type,
             'id': parent_folder_id or entry_point_id,
             'cwd': container_manager.container_root,
-            'cwd_id': None,
             'project_id': parent_folder_id
         }
 
@@ -82,6 +82,7 @@ def handle_start_terminal(current_user, data):
              'message': 'Terminal started successfully', 'status': 200, 'valid': True})
 
     except Exception as e:
+        print(e)
         emit('start_terminal', {'message': str(e), 'status': 500})
 
 
@@ -108,6 +109,7 @@ def handle_run_code(current_user, data):
     entry_point_id = data.get('entry_point_id')
     type = data.get('type')
     language = data.get('language')
+    print(data)
 
     if not language:
         emit('code_result', {'message': 'Language is required'}, 400)
@@ -118,13 +120,15 @@ def handle_run_code(current_user, data):
         container_info = container_manager.active_containers.get(
             current_user.id)
 
+        # Define temp_dir and entry point variables
+        temp_dir = None
+        entry_point = None
+        entry_point_path = None
+
         # Create a new container if none exists or if the language/type doesn't match
         if not container_info or container_info['language'] != language or container_info['type'] != type:
             container_manager.manage_user_container(current_user.id)
             temp_dir = tempfile.mkdtemp()
-
-            entry_point, entry_point_path = determine_entry_point(
-                parent_folder_id, entry_point_id, type, temp_dir)
 
             container = create_docker_environment(
                 language, temp_dir, user_id=current_user.id)
@@ -136,17 +140,22 @@ def handle_run_code(current_user, data):
                 'language': language,
                 'type': type,
                 'cwd': container_manager.container_root,
-                'cwd_id': None,
                 'project_id': parent_folder_id
             }
         else:
             container = container_info['container']
             temp_dir = container_info['temp_dir']
 
-        # Execute the code inside the Docker container
+        # Determine the entry point for both new and existing containers
+        entry_point, entry_point_path = determine_entry_point(
+            parent_folder_id, entry_point_id, type, temp_dir)
+
+        # Normalize the entry point path
         entry_point_name = entry_point['file'].filename
         entry_point_path = entry_point_path.replace(
             temp_dir, container_manager.container_root)
+
+        # Execute the code inside the Docker container
         exit_code, output = execute_code(container, entry_point_path, language)
 
         # Emit the result of the code execution
@@ -196,10 +205,34 @@ def handle_send_command(current_user, data):
         temp_dir = container_info.get('temp_dir')
         mapRoot = cwd.replace(container_manager.container_root, temp_dir)
 
+        # Wild Card Not Yet Supported
+        if '*' in command and any(substring in command for substring in ['mkdir', 'rm', 'cd', 'mv', 'touch']):
+            emit('command_result', {
+                'message': f'Command Failed',
+                'exit_code': 1,
+                'output': 'Use of wild card like *  is not yet supported for '
+                'structure : create, remove, alter, navigate',
+                'status': 400
+            })
+            return
+
         # Handle compound commands separated by '; &&, '
         tasks = re.split('; &&, ', command)
         for task in tasks:
-            # Handle touch, mv/cp, and mkdir commands specifically
+            project_id = container_info['project_id']
+            cwd = container_info['cwd']
+            project = Folder.query.get(project_id)
+            if any(cmd in task for cmd in ['mv', 'mkdir', 'rm', 'touch']) and (not project_id or (project and project.foldername not in cwd)):
+
+                emit('command_result', {
+                    'message': f'Command Failed',
+                    'exit_code': 1,
+                    'output': 'Use  structure : create, remove, alter, navigate'
+                    ' in a None Project Folder root is not allowed',
+                    'status': 400
+                })
+                return
+             # Handle touch, mv/cp, and mkdir <structure mutation> commands specifically
             if task.startswith("touch "):
                 refined_task = handle_touch_command(task, current_user.id)
                 if refined_task:
@@ -208,15 +241,16 @@ def handle_send_command(current_user, data):
                 handle_move_or_copy_command(task, current_user.id)
             elif task.startswith("mkdir "):
                 handle_mkdir_command(task, current_user.id)
+            elif task.startswith("rm "):
+                handle_rm_command(task, current_user.id)
 
         # Execute the command in the Docker container
-        exit_code, output, new_cwd_container, new_cwd_id = execute_command(
+        exit_code, output, new_cwd_container = execute_command(
             container, command, cwd=cwd, current_user_id=current_user.id)
-
+        print("new cwd", new_cwd_container)
         # Update the container's working directory if it changed
         if new_cwd_container:
             container_manager.active_containers[current_user.id]['cwd'] = new_cwd_container
-            container_manager.active_containers[current_user.id]['cwd_id'] = new_cwd_id
 
         # Emit the result of the command execution
         emit('command_result', {

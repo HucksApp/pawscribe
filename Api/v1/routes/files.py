@@ -69,14 +69,17 @@ def list_files(current_user):
     """
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    
+
     # Paginate the files owned by the current user
-    pagination = File.query.filter_by(owner_id=current_user.id).paginate(page=page, per_page=per_page, error_out=True)
-    
+    pagination = File.query.filter_by(owner_id=current_user.id).paginate(
+        page=page, per_page=per_page, error_out=True)
+
     # Count public and private files for the current user
-    public_count = File.query.filter_by(owner_id=current_user.id, private=False).count()
-    private_count = File.query.filter_by(owner_id=current_user.id, private=True).count()
-    
+    public_count = File.query.filter_by(
+        owner_id=current_user.id, private=False).count()
+    private_count = File.query.filter_by(
+        owner_id=current_user.id, private=True).count()
+
     files = pagination.items
     result = {
         "files": [file.to_dict() for file in files],
@@ -106,27 +109,28 @@ def uploadfile(current_user):
     :return: JSON with upload result or error message
     """
     msg = {'message': "", "valid": False}
-    
+
     # Check if 'file' is present in the request
     if 'file' not in request.files:
         msg.update({"message": "No file part"})
         return jsonify(msg), 400
-    
+
     file = request.files['file']
     if file.filename == '':
         msg.update({'message': "No selected file"})
         return jsonify(msg), 400
-    
+
     # Validate the file format and check for duplicates
     if file and allowed_file(file.filename, msg):
         file_data = file.read()
         file_hash = File.generate_hash(file_data)
         existing_file = File.query.filter_by(hash=file_hash).first()
-        
+
         if existing_file:
-            msg.update({'message': 'File already exists', 'file_id': existing_file.id})
+            msg.update({'message': f'File already exists as {
+                       existing_file.filename}', 'file_id': existing_file.id})
             return jsonify(msg), 400
-        
+
         # Create and save new file
         new_file = File(
             filename=file.filename,
@@ -135,10 +139,10 @@ def uploadfile(current_user):
         )
         db.session.add(new_file)
         db.session.commit()
-        
+
         msg.update({'message': 'File uploaded', 'valid': True})
         return jsonify(msg), 200
-    
+
     return jsonify(msg), 405 if msg != "" else 400
 
 
@@ -157,22 +161,24 @@ def get_file(current_user, file_id):
     """
     msg = {"message": "", "valid": False}
     file = File.query.get(file_id)
-    
+
     if file:
         if file.shared_with_key:
             # Verify if the user is the owner or if the correct shared key is provided
             if current_user.id == file.user_id:
                 return jsonify(file.to_dict()), 200
             elif request.args.get('shared_with_key') == file.shared_with_key:
-                msg.update({"message": "File Found", "valid": True, "file": file.to_dict()})
+                msg.update({"message": "File Found",
+                           "valid": True, "file": file.to_dict()})
                 return jsonify(msg), 200
             else:
                 msg.update({"message": "Invalid sharing key"})
                 return jsonify(msg), 401
-        
-        msg.update({"message": "File Found", "valid": True, "file": file.to_dict()})
+
+        msg.update({"message": "File Found",
+                   "valid": True, "file": file.to_dict()})
         return jsonify(msg), 200
-    
+
     msg.update({"message": "File not found"})
     return jsonify(msg), 404
 
@@ -192,19 +198,20 @@ def delete_file(current_user, file_id):
     """
     msg = {"message": "", "valid": False}
     file = File.query.get_or_404(file_id)
-    
+
     # Verify file ownership
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    
+
     # Check if the file is linked to any folders
     existing_fxs = FolderFxS.query.filter_by(file_id=file_id).first()
     if existing_fxs:
         parent_folder = Folder.query.get_or_404(existing_fxs.parent_id)
-        msg.update({'message': f'Exclude this file from Folder {parent_folder.foldername}'})
+        msg.update({'message': f'Exclude this file from Folder {
+                   parent_folder.foldername}'})
         return jsonify(msg), 403
-    
+
     # Delete the file
     db.session.delete(file)
     db.session.commit()
@@ -227,11 +234,11 @@ def download_file(current_user, file_id):
     """
     msg = {'message': 'Permission denied'}
     file = File.query.get_or_404(file_id)
-    
+
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    
+
     # Return the file data as an attachment
     return send_file(
         BytesIO(file.data),
@@ -255,18 +262,19 @@ def edit_file(current_user, file_id):
     """
     msg = {"message": "", "valid": False}
     file: File = File.query.get_or_404(file_id)
-    
+
     if file:
         if current_user.id != file.owner_id:
             msg.update({'message': 'Permission denied'})
             return jsonify(msg), 403
-        
+
         # Return file content and metadata for editing
         content = BytesIO(file.data).read().decode("utf-8")
         file_info = file.to_dict()
-        msg.update({**file_info, 'message': 'success', "content": content, "valid": True})
+        msg.update({**file_info, 'message': 'success',
+                   "content": content, "valid": True})
         return jsonify(msg), 200
-    
+
     msg.update({"message": "File not found"})
     return jsonify(msg), 404
 
@@ -289,15 +297,16 @@ def handle_save_file(current_user):
     content = data.get('content')
     file_name = data.get('file_name', 'Doc')
     file_id = data.get('file_id') if 'file_id' in data else None
-    
+
     # Generate a hash for the file content to prevent duplicates
     file_hash = File.generate_text_hash(content)
     existing_file = File.query.filter_by(hash=file_hash).first()
-    
+
     if existing_file:
-        msg.update({'message': 'File already exists', 'file_id': existing_file.id})
+        msg.update({'message': 'File already exists',
+                   'file_id': existing_file.id})
         return jsonify(msg), 409
-    
+
     # Update an existing file or create a new one
     if file_id:
         file: File = File.query.get_or_404(file_id)
@@ -314,7 +323,7 @@ def handle_save_file(current_user):
             owner_id=current_user.id
         )
         db.session.add(new_file)
-    
+
     db.session.commit()
     msg.update({'message': 'File saved', 'valid': True, "file_id": new_file.id})
     return jsonify(msg), 200
@@ -336,12 +345,12 @@ def share_file(current_user, file_id):
     """
     msg = {"message": "", "valid": False}
     file = File.query.get_or_404(file_id)
-    
+
     # Verify ownership
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    
+
     # Toggle sharing key based on file privacy
     if file.private:
         key = token_urlsafe(8)
@@ -349,7 +358,7 @@ def share_file(current_user, file_id):
         msg.update({"shared_with_key": key})
     else:
         file.shared_with_key = None
-    
+
     db.session.commit()
     msg.update({"message": "File Shared", "valid": True, "file_id": file.id})
     return jsonify(msg), 200
@@ -370,21 +379,22 @@ def private_file(current_user, file_id):
     """
     msg = {"message": "", "valid": False}
     file = File.query.get_or_404(file_id)
-    
+
     # Verify ownership
     if file.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-    
+
     # Toggle privacy status
     if file.private:
         file.private = False
         file.shared_with_key = None
     else:
         file.private = True
-    
+
     file.updated_at = datetime.now()
     db.session.commit()
-    
-    msg.update({"message": f"File Set To {'Private' if file.private else 'Public'}", "valid": True, "file_id": file.id})
+
+    msg.update({"message": f"File Set To {
+               'Private' if file.private else 'Public'}", "valid": True, "file_id": file.id})
     return jsonify(msg), 200

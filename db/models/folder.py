@@ -26,7 +26,7 @@ class Folder(Base):
     language = db.Column(db.String(30), nullable=True)
     owner_id = db.Column(db.String(36), db.ForeignKey(User.id), nullable=False)
 
-    def __init__(self, foldername, description, language, owner_id):
+    def __init__(self, foldername, owner_id, description=None, language=None):
         """
         Initialize a new Folder instance.
 

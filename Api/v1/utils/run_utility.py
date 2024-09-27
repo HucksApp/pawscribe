@@ -64,7 +64,7 @@ def create_temp_structure(folder: Folder, base_path: str = '', entry_point_id: i
 
     # Add files to the folder in the temp structure
     for file in files_objs:
-        file_path = os.path.join(folder_path, file['file'].filename)
+        file_path = os.path.join(folder_path, file['fx'].name if file['fx'] else file['file'].filename)
         with open(file_path, 'wb') as f:
             f.write(file['file'].data)
         # Check if this file is the entry point
@@ -75,7 +75,7 @@ def create_temp_structure(folder: Folder, base_path: str = '', entry_point_id: i
     # Add texts to the folder in the temp structure
     for text in texts:
         text_path = os.path.join(
-            folder_path, unique_name(text['text'].file_type))
+            folder_path, unique_name(text['fx'].name if text['fx'] else text['text'].file_type))
         with open(text_path, 'w') as f:
             f.write(text['text'].content)
         # Check if this text is the entry point
@@ -116,7 +116,7 @@ def project_structure_folder(parent_folder_id: int, entry_point_id: int, temp_di
     # Recursively retrieve the folder structure and find the entry point
     entry_point, entry_point_path = create_temp_structure(
         folder, temp_dir, entry_point_id)
-
+    print(f'entry_point =======>{entry_point}')
     return entry_point, entry_point_path
 
 

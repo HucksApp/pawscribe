@@ -1,4 +1,4 @@
 db/db_instance/
-venv
+.venv
 .vscode
 .DS_Store

@@ -289,8 +289,9 @@ def handle_file_inclusion(data, current_user, parent_id, parent_folder, name, ms
 
 
 def handle_folder_inclusion(data, current_user, parent_folder, name, parent_id, msg):
+    print(f'in   -------> 444444')
     child_folder_id = data.get('folder_id')
-
+    print(f'in   -------> {child_folder_id}')
     if child_folder_id:
         # Old folder
         child_folder = Folder.query.get_or_404(child_folder_id)
@@ -319,7 +320,9 @@ def handle_folder_inclusion(data, current_user, parent_folder, name, parent_id, 
             msg.update(
                 {'message': 'A new <Folder> requires a <name> Folder Name'})
             return None
-
+        
+        print(f'in   -------> in else 444444', current_user.id)
+        print(f'in   -------> in else 444444', name)
         new_folder = Folder(foldername=name, owner_id=current_user.id)
         db.session.add(new_folder)
         db.session.commit()

@@ -169,6 +169,27 @@ def get_shared_text(text_id):
                'valid': True, 'file_type': text.file_type})
     return jsonify(msg), 200
 
+@text_bp.route('/private/<int:text_id>', methods=['GET'])
+@token_required
+def private_text(current_user, text_id):
+    msg = {"message": "", "valid": False}
+    text: Text = Text.query.get_or_404(text_id)
+    print(text.private, '111')
+    if text.owner_id != current_user.id:
+        msg.update({'message': 'Permission denied'})
+        return jsonify(msg), 403
+    if text.private:
+        text.private = False
+        text.shared_with_key = None
+    else:
+        text.private = True
+    text.updated_at = datetime.now()
+    print(text.private, '222')
+    db.session.commit()
+    msg.update({"message": f"Script Set To {'Private' if text.private else 'Public'}",
+               "valid": True, "text_id": text.id})
+    return jsonify(msg), 200
+
 
 @text_bp.route('/<int:text_id>', methods=['DELETE'])
 @token_required
@@ -222,41 +243,36 @@ def save_text_to_file(current_user, text_id):
     filename = data.get('filename') if 'filename' in data else None
     extension = data.get('extension') if 'extension' in data else f".{
         filename.split('.')[-1]}"
-
     if not extension:
         msg.update({'message': "file extension is required (type)"})
         return jsonify(msg), 422
-
     text: Text = Text.query.get_or_404(text_id)
     if text.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
-
     if not filename:
         filename = unique_name(extension, filename)
-
+    print(f'{filename}{extension} 1111111')
     if allowed_file(f'{filename}{extension}', msg):
+        print(f'{filename}{extension} 2222222')
         file_hash = File.generate_hash(text.content.encode('utf-8'))
         existing_file = File.query.filter_by(hash=file_hash).first()
         if existing_file:
-            msg.update({'message': f'Content Dublication, File exist as {
-                       existing_file.filename}', 'file_id': existing_file.id})
+            msg.update({'message': f'Content Dublication, File exist as {existing_file.filename} ',
+                       'file_id': existing_file.id})
             return jsonify(msg), 409
         elif msg['message'] != "":
             return jsonify(msg), 409
-
         file = File(
             filename=f'{filename}{extension}',
-            content=text.content,
             owner_id=current_user.id,
-            hash=file_hash
-        )
+            data=text.content.encode('utf-8'))
+        text.file_id = file.id
         db.session.add(file)
         db.session.commit()
-        msg.update({'message': 'File Saved',
-                   'valid': True, 'file_id': file.id})
-        return jsonify(msg), 201
-
+        return jsonify(msg), 200
+    print(f'{filename}{extension}')
+    msg.update({'message': 'File Not Supported'})
     return jsonify(msg), 409
 
 

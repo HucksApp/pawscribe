@@ -21,7 +21,7 @@ class File(Base):
     __tablename__ = 'file'
 
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(256), nullable=False)
+    filename = db.Column(db.String(256), unique=True, nullable=False)
     data = db.Column(db.LargeBinary(length=(2**32)-1), nullable=False)
     hash = db.Column(db.String(64), unique=True, nullable=False)
     owner_id = db.Column(db.String(36), db.ForeignKey(User.id), nullable=False)

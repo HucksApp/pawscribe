@@ -149,10 +149,9 @@ def execute_command(container, command, cwd=None, current_user_id=None):
         full_command = f"cd {cwd} && {command}"
         exit_code, output = container.exec_run(f"/bin/sh -c '{full_command}'")
 
-        cwd_id = None  # Initialize cwd_id
-
+        print("output ====>", exit_code)
         # Handle directory changes
-        if command.startswith('cd '):
+        if command.startswith('cd ') and exit_code == 0:
             new_cwd_parts = command.split('cd', 1)[-1].strip()
             new_cwd = os.path.normpath(os.path.join(cwd, new_cwd_parts))
 
@@ -161,17 +160,15 @@ def execute_command(container, command, cwd=None, current_user_id=None):
                 # Just to check if it exists
                 container.exec_run(f"ls {new_cwd}")
                 cwd = new_cwd
-                cwd_id = cwd.split('/')[-1]  # Extract cwd_id
-
                 # Update active container cwd and cwd_id
                 if current_user_id:
                     container_manager.active_containers[current_user_id]['cwd'] = cwd
-                    container_manager.active_containers[current_user_id]['cwd_id'] = cwd_id
+                    print("cwd name ===>",cwd)
             except Exception:
                 print(f"Directory {
                       new_cwd} does not exist. Keeping old cwd: {cwd}")
 
-        return exit_code, output.decode(), cwd, cwd_id
+        return exit_code, output.decode(), cwd
 
     except Exception as e:
         print(f"Error executing command in container: {str(e)}")
