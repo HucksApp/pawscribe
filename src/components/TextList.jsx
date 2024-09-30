@@ -57,6 +57,7 @@ const TextList = ({ searchValue, stateChanged, setStateChange }) => {
     } catch (error) {
       if (error.response)
         if (
+          error.response &&
           error.response.data.msg &&
           error.response.data.msg === 'Token has expired'
         ) {

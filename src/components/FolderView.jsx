@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, createSearchParams } from 'react-router-dom';
+import { useNavigate /*, createSearchParams*/ } from 'react-router-dom';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import {
@@ -10,8 +10,6 @@ import {
   IconButton,
 } from '@mui/material';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
-import EditIcon from '@mui/icons-material/Edit';
-import InfoIcon from '@mui/icons-material/Info';
 import FolderDeleteIcon from '@mui/icons-material/FolderDelete';
 import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
 import FolderIcon from '@mui/icons-material/Folder';
@@ -101,10 +99,10 @@ const FolderView = ({ folder, setStateChange }) => {
     navigate(`/openFolder?folderId=${folder.id}`);
   };
 
-  const handleEdit = () => {
-    // Edit logic here
-    handleMenuClose();
-  };
+  // const handleEdit = () => {
+  //   // Edit logic here
+  //   handleMenuClose();
+  // };
 
   const handleDownload = async () => {
     try {
@@ -138,8 +136,7 @@ const FolderView = ({ folder, setStateChange }) => {
   };
 
   const handleOpen = () => {
-    const params = { id: folder.id };
-    navigate(`/viewfolder?${createSearchParams(params)}`);
+    navigate(`/openFolder?folderId=${folder.id}`);
     handleMenuClose();
   };
 
@@ -225,7 +222,12 @@ const FolderView = ({ folder, setStateChange }) => {
         }
       } else if (includeType === 'File') {
         // Check if the file is an image
-        if (item.fileBlob && item.fileBlob.type.startsWith('image/')) {
+        if (
+          item &&
+          item.fileBlob &&
+          item.fileBlob.type &&
+          item.fileBlob.type.startsWith('image/')
+        ) {
           // Since it's an image, we just send the ID and the existing hash
           payload.hash = item.hash;
         } else if (item.fileBlob) {
@@ -306,7 +308,7 @@ const FolderView = ({ folder, setStateChange }) => {
     <motion.div
       initial={{ opacity: 0, x: 100 }} // Start from right (100px) with 0 opacity
       animate={{ opacity: 1, x: 0 }} // Move to its position (x: 0) and full opacity
-      exit={{ opacity: 0, x: -100 }} // Exit by moving left (-100px) and fade out
+      exit={{ opacity: 0, y: 100 }} // Exit by moving left (-100px) and fade out
       transition={{
         duration: 0.7, // Adjust the duration for a slow entry
         ease: 'easeInOut', // Smooth ease-in and ease-out effect
@@ -362,13 +364,6 @@ const FolderView = ({ folder, setStateChange }) => {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={handleEdit}>
-              <EditIcon
-                sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
-              />
-              <div className="menuitem">Edit</div>
-            </MenuItem>
-
             <MenuItem onClick={handleIncludeMenuOpen}>
               <LibraryAddIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
@@ -396,7 +391,7 @@ const FolderView = ({ folder, setStateChange }) => {
               <div className="menuitem">Open in Code Editor</div>
             </MenuItem>
 
-            <MenuItem onClick={handleIncludeMenuOpen}>
+            <MenuItem onClick={handleOpen}>
               <ImportContactsIcon
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
@@ -408,12 +403,6 @@ const FolderView = ({ folder, setStateChange }) => {
                 sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
               />
               <div className="menuitem">Delete</div>
-            </MenuItem>
-            <MenuItem onClick={handleOpen}>
-              <InfoIcon
-                sx={{ fontSize: 25, color: '#616161', paddingRight: 1 }}
-              />
-              <div className="menuitem">Folder Details</div>
             </MenuItem>
           </Menu>
 

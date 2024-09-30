@@ -10,14 +10,13 @@
   scroll-behavior: smooth;
 }
 
-.terminal-output {
+/* .terminal-output {
   display: flex;
   border: solid green;
   align-items: flex-start;
   justify-content: flex-end;
   flex-direction: column;
-  /**/ /* Preserve whitespace for formatting */
-}
+} */
 
 .terminal-input {
   display: flex;
@@ -30,14 +29,14 @@
 .terminal-history {
   white-space: pre-wrap;
   width: auto;
-  border: solid red;
+  /* border: solid red; */
 }
-
+/* 
 .terminal-history:hover {
   border: solid thin #616161;
   cursor: pointer;
   opacity: 0.6;
-}
+} */
 
 .terminal-input input {
   background: none;

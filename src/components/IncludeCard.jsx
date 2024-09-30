@@ -20,7 +20,10 @@ const IncludeCard = ({ file, icon, onSelect }) => {
   useEffect(() => {
     if (blob) setFileBlob(blob.blob);
     else {
-      const { fetchBlobContent, loading } = getFileContent(file);
+      console.log('====', file);
+      const { fetchBlobContent, loading } = getFileContent(
+        file.fx && file.fx.file_id ? file.fx.file_id : file.id
+      );
       if (!loading) {
         blob = fetchBlobContent((blob = true));
         setFileBlob(blob);

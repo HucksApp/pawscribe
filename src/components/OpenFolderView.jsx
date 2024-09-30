@@ -31,6 +31,7 @@ const OpenFolderView = () => {
 
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
+  console.log('token', '=======>', token);
 
   const handleIncludeMenuClose = () => {
     setIncludeAnchorEl(null);
@@ -70,7 +71,12 @@ const OpenFolderView = () => {
         }
       } else if (includeType === 'File') {
         // Check if the file is an image
-        if (item.fileBlob && item.fileBlob.type.startsWith('image/')) {
+        if (
+          item &&
+          item.fileBlob &&
+          item.fileBlob.type &&
+          item.fileBlob.type.startsWith('image/')
+        ) {
           // Since it's an image, we just send the ID and the existing hash
           payload.hash = item.hash;
         } else if (item.fileBlob) {

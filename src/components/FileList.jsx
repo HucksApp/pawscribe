@@ -67,20 +67,26 @@ const FileList = ({ searchValue, stateChanged, setStateChange }) => {
           localStorage.removeItem('jwt_token');
           dispatch(clearUser());
           navigate('/');
+          return;
         } else if (error.message == 'Request failed with status code 401') {
           localStorage.removeItem('jwt_token');
           dispatch(clearUser());
           navigate('/');
-        } else
+          return;
+        } else {
           Notify({
             message: `${error.message}. ${error.response.data.message} `,
             type: 'error',
           });
-      else
+          return;
+        }
+      else {
         Notify({
           message: `${error.message}`,
           type: 'error',
         });
+        return;
+      }
     }
   };
 

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const getFileContent = file => {
+const getFileContent = fileId => {
   let loading = false;
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
@@ -10,7 +10,7 @@ const getFileContent = file => {
       loading = true;
       console.log('Fetching file from API');
       const response = await axios.get(
-        `${base}/Api/v1/files/download/${file.fx.file_id}`,
+        `${base}/Api/v1/files/download/${fileId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob',

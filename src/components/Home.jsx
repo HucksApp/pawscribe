@@ -46,11 +46,11 @@ const Home = () => {
             </p>
             <p className="p3">
               <CheckIcon />
-              Keep track of recent edits and updates.
+              Software development IDE
             </p>
             <p className="p4">
               <CheckIcon />
-              Manage your ongoing collaborations.
+              coding collaborations and pair programming.
             </p>
           </div>
           <div className="block3">

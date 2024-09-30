@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, createSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Grid } from '@mui/material';
@@ -20,10 +20,37 @@ const OpenFolderList = ({
   subfolders,
 }) => {
   //const dispatch = useDispatch();
+  const [filteredFiles, setFilteredFiles] = useState([]);
+  const [filteredTexts, setFilteredTexts] = useState([]);
+  const [filteredSubfolders, setFilteredSubfolders] = useState([]);
 
-  useEffect(() => {}, [texts, files, subfolders]);
+  // Search logic when searchValue is updated
+  useEffect(() => {
+    if (searchValue) {
+      setFilteredFiles(
+        [...files]
+          .filter(file => file.filename.toLowerCase().includes(searchValue))
+          .sort((a, b) => a.filename.localeCompare(b.filename))
+      );
+      setFilteredTexts(
+        texts.filter(text => text.content.toLowerCase().includes(searchValue))
+      );
+
+      setFilteredSubfolders(
+        [...subfolders]
+          .filter(folder =>
+            folder.foldername.toLowerCase().includes(searchValue.toLowerCase())
+          )
+          .sort((a, b) => a.foldername.localeCompare(b.foldername))
+      );
+    } else {
+      setFilteredFiles(files);
+      setFilteredTexts(texts);
+      setFilteredSubfolders(subfolders);
+    }
+  }, [searchValue, texts, files, subfolders]);
+
   const navigate = useNavigate();
-  console.log(searchValue, stateChanged, '--------');
 
   const handleOpenScript = async text => {
     const params = { id: text.id, type: 'Text' };
@@ -31,12 +58,9 @@ const OpenFolderList = ({
   };
 
   const handleOpenFile = async file => {
-    console.log(file, file.blob, '==========MMMMM');
-
     let url;
     if (file && file.blob && Object.keys(file.blob).length > 0) {
       url = URL.createObjectURL(file.blob);
-      console.log(file, '-------->file in');
     }
 
     // Create the params object with conditional inclusion of 'src'
@@ -59,8 +83,8 @@ const OpenFolderList = ({
       <Grid container spacing={5}>
         {' '}
         {/* Add spacing between grid items */}
-        {subfolders &&
-          subfolders.map(subfolder => (
+        {filteredSubfolders &&
+          filteredSubfolders.map(subfolder => (
             <Grid item xs={6} sm={4} md={3} lg={2} key={subfolder.id}>
               {/* Responsive grid layout for folders */}
               <Folder
@@ -70,8 +94,8 @@ const OpenFolderList = ({
               />
             </Grid>
           ))}
-        {files &&
-          files.map(file => (
+        {filteredFiles &&
+          filteredFiles.map(file => (
             <Grid item xs={6} sm={4} md={3} lg={2} key={file.id}>
               {/* Responsive grid layout for files */}
               <File
@@ -82,8 +106,8 @@ const OpenFolderList = ({
               />
             </Grid>
           ))}
-        {texts &&
-          texts.map(text => (
+        {filteredTexts &&
+          filteredTexts.map(text => (
             <Grid item xs={6} sm={4} md={3} lg={2} key={text.id}>
               {/* Responsive grid layout for texts */}
               <Text

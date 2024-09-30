@@ -35,16 +35,18 @@ import { useSelector } from 'react-redux';
 import struct_format, { getAllExpandableItems } from '../utils/formatter';
 import { selectProject } from '../store/projectSlice';
 import getFileContent from '../utils/projectBlob';
+import NewDialog from './NewDialog';
+import AlertDialog from './Alert';
 import PropTypes from 'prop-types';
 import '../css/project.css';
 import codeIcon, { editorLang } from '../utils/codeIcon';
 import hashSHA256 from '../utils/hash';
 import DataQueueCache from '../store/queue';
-// import axios from 'axios';
-// import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 // import { addFileBlob } from '../store/fileBlobSlice';
 // import { useDispatch } from 'react-redux';
-// import { Notify } from '../utils/Notification';
+import { Notify } from '../utils/Notification';
 
 // const ITEMS = [
 //   {
@@ -282,13 +284,24 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
   const item = publicAPI.getItem(itemId);
   const expandable = isExpandable(children);
   const icon = getIconFromFileType(item);
-  // const base = process.env.REACT_APP_BASE_API_URL;
-  // const token = localStorage.getItem('jwt_token');
-  // const navigate = useNavigate();
+  const base = process.env.REACT_APP_BASE_API_URL;
+  const token = localStorage.getItem('jwt_token');
+  const navigate = useNavigate();
   // const dispatch = useDispatch();
 
   const [contextMenu, setContextMenu] = useState(null);
+  const [name, setname] = useState('');
+  const [dialogOpenA, setDialogOpenA] = useState(false);
+  const [dialogOpenB, setDialogOpenB] = useState(false);
   const [isExpanded, setIsExpanded] = useState(status.expanded); // Local expansion state
+
+  const [stateChanged, setStatChanged] = useState(false);
+
+  useEffect(() => {
+    if (stateChanged) {
+      setStatChanged(false);
+    }
+  }, [stateChanged]);
 
   const handleContextMenu = event => {
     event.preventDefault();
@@ -304,8 +317,93 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
     setContextMenu(null);
   };
 
+  const addFile = async () => {
+    const payload = {
+      parent_folder_id: project.id,
+      type: 'File',
+      name,
+      blank: true,
+    };
+
+    try {
+      console.log(payload);
+      const response = await axios.post(
+        `${base}/Api/v1/folders/include`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      Notify({ message: response.data.message, type: 'success' });
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.msg === 'Token has expired') {
+          navigate('/');
+        } else {
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
+        }
+      } else {
+        setDialogOpenB(false);
+        if (!stateChanged) {
+          setStatChanged(true);
+        }
+        Notify({
+          message: `${error.message}`,
+          type: 'error',
+        });
+      }
+      // } finally {
+    }
+  };
+
+  const deleteHandler = async item => {
+    try {
+      console.log('fxxxxxx=========>', item.fx);
+      const response = await axios.delete(
+        `${base}/Api/v1/folders/${item.fx.id}/exclude`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setDialogOpenA(false);
+      Notify({ message: response.data.message, type: 'success' });
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.msg === 'Token has expired') {
+          navigate('/');
+        } else {
+          setDialogOpenA(false);
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
+        }
+      } else {
+        setDialogOpenA(false);
+        if (!stateChanged) {
+          setStatChanged(true);
+        }
+        Notify({
+          message: `${error.message}`,
+          type: 'error',
+        });
+      }
+    }
+  };
+
   const handleMenuClick = action => {
     console.log(`Action: ${action} on item: ${itemId}`);
+
+    if (action == 'addFile') {
+      addFile(item);
+    } else if (action == 'delete') {
+      setDialogOpenA(true);
+    }
+
     handleClose();
   };
 
@@ -333,9 +431,16 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
         setCurrentItem(oldCurrent);
       } else {
         // Fetch new content from the server or blob if not found in the queue
-        const { fetchBlobContent, loading } = getFileContent(item);
+        const { fetchBlobContent, loading } = getFileContent(item.fx.file_id);
         if (!loading) {
-          const content = await fetchBlobContent(); // Fetch content from the server
+          let content;
+          console.log(item, '======> item');
+          if (item.fx.type == 'Text') {
+            content = item.content;
+          }
+          if (item.fx.type == 'File') {
+            content = await fetchBlobContent(); // Fetch content from the server
+          }
           setEditorContent(content || 'Empty !!!');
 
           // Update the dataQueue with the new file data
@@ -352,7 +457,7 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
               },
             ];
           });
-
+          console.log('item====', item);
           // Set the current item to the fetched data
           setCurrentItem({
             id: item.fx.id,
@@ -365,8 +470,11 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
 
       // Determine the language of the file and update the editor
       const ext = item.file_type
-        ? item.file_type
-        : item.filename.split('.').pop().toLowerCase();
+        ? item.file_type.replace('.', '')
+        : item.filename
+          ? item.filename.split('.').pop().toLowerCase()
+          : null;
+
       const lang = editorLang(ext);
       onLanguageChange(lang);
 
@@ -432,10 +540,10 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
                 Add File
               </MenuItem>,
               <MenuItem
-                key="addScript"
-                onClick={() => handleMenuClick('addScript')}
+                key="addFolder"
+                onClick={() => handleMenuClick('addFolder')}
               >
-                Add Script
+                Add Folder
               </MenuItem>,
               <MenuItem key="delete" onClick={() => handleMenuClick('delete')}>
                 Delete
@@ -456,6 +564,22 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
               </MenuItem>,
             ]}
       </Menu>
+      <AlertDialog
+        title={'Delete'}
+        message={`Delete ${item.fx.filename ? item.fx.filename : item.fx.foldername ? item.fx.foldername : item.fx.name} and all its content ?`}
+        handleYes={() => deleteHandler(item)}
+        handleNo={() => setDialogOpenA(false)}
+        open={dialogOpenA}
+        handleClose={() => setDialogOpenA(false)}
+      />
+      <NewDialog
+        type={'File'}
+        valname={name}
+        setValname={setname}
+        handleClose={() => setDialogOpenB(false)}
+        open={dialogOpenB}
+        handleAdd={addFile}
+      />
     </TreeItem2Provider>
   );
 });
@@ -478,6 +602,7 @@ const ProjectDrawer = ({
   const apiRef = useTreeViewApiRef();
   const project = useSelector(selectProject);
   const ITEM = struct_format(project);
+
   const expandableItems = getAllExpandableItems([ITEM]);
   console.log(ITEM);
   console.log(dataQueue, '===>');

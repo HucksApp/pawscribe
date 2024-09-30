@@ -111,7 +111,7 @@ const New = ({ type, onSelect, setModalOpen }) => {
             }}
             variant="h6"
           >
-            {`Blank ${type}`}
+            {`New ${type}`}
           </Typography>
         </CardContent>
       </Card>

@@ -103,6 +103,7 @@ const TextView = ({ text, setStateChange }) => {
       console.log(response.data);
     } catch (error) {
       if (
+        error.response &&
         error.response.data.msg &&
         error.response.data.msg == 'Token has expired'
       )
@@ -131,6 +132,7 @@ const TextView = ({ text, setStateChange }) => {
       console.log(response.data);
     } catch (error) {
       if (
+        error.response &&
         error.response.data.msg &&
         error.response.data.msg == 'Token has expired'
       )
@@ -176,6 +178,7 @@ const TextView = ({ text, setStateChange }) => {
       Notify({ message: response.data.message, type: 'success' });
     } catch (error) {
       if (
+        error.response &&
         error.response.data.msg &&
         error.response.data.msg == 'Token has expired'
       )
@@ -192,7 +195,7 @@ const TextView = ({ text, setStateChange }) => {
   };
 
   const handleEdit = () => {
-    // Edit logic here
+    navigate(`/editor?textId=${text.id}`);
     handleMenuClose();
   };
 
@@ -210,7 +213,7 @@ const TextView = ({ text, setStateChange }) => {
     <motion.div
       initial={{ opacity: 0, x: 100 }} // Start from right (100px) with 0 opacity
       animate={{ opacity: 1, x: 0 }} // Move to its position (x: 0) and full opacity
-      exit={{ opacity: 0, x: -100 }} // Exit by moving left (-100px) and fade out
+      exit={{ opacity: 0, y: 100 }} // Exit by moving left (-100px) and fade out
       transition={{
         duration: 0.7, // Adjust the duration for a slow entry
         ease: 'easeInOut', // Smooth ease-in and ease-out effect

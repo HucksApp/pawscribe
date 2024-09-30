@@ -3,8 +3,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import IconButton from '@mui/material/IconButton';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
-import ShieldIcon from '@mui/icons-material/Shield';
-import PublicIcon from '@mui/icons-material/Public';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -15,21 +13,16 @@ import { useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import CodeIcon from '@mui/icons-material/Code';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FolderIcon from '@mui/icons-material/Folder';
-//import DataQueueCache from '../store/queue';
-//import ProjectView from './ProjectView';
-//import { clearAllWithPrefix } from '../store/cache';
-//import { useDispatch } from 'react-redux';
-//import { clearUser } from '../store/userSlice';
 
 const base = process.env.REACT_APP_BASE_API_URL;
+const token = localStorage.getItem('jwt_token');
 
 const MenuDrawer = () => {
   const [open, setOpen] = useState(false);
-  //const dispatch = useDispatch();
 
   const navigate = useNavigate();
   const toggleDrawer = newOpen => () => {
@@ -38,15 +31,17 @@ const MenuDrawer = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await axios.get(base + '/Api/v1/logout');
+      const response = await axios.get(base + '/Api/v1/logout', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      navigate('/');
       Notify({ message: response.data.message, type: 'success' });
       localStorage.removeItem('jwt_token');
-      //dispatch(clearUser());
       localStorage.clear();
-      //clearAllWithPrefix('all');
-      navigate('/');
     } catch (error) {
-      Notify({ message: error.message, type: 'error' });
+      navigate('/');
+      localStorage.removeItem('jwt_token');
+      localStorage.clear();
     }
   };
 
@@ -125,7 +120,7 @@ const MenuDrawer = () => {
         >
           <ListItemButton>
             <ListItemIcon>
-              <CodeIcon sx={{ fontSize: 30, color: '#616161' }} />
+              <TerminalIcon sx={{ fontSize: 30, color: '#616161' }} />
             </ListItemIcon>
             <div className="itemtext">Scripts</div>
           </ListItemButton>
@@ -142,32 +137,6 @@ const MenuDrawer = () => {
             </ListItemIcon>
 
             <div className="itemtext">Editor</div>
-          </ListItemButton>
-        </ListItem>
-
-        <ListItem
-          key={'publics'}
-          onClick={() => navigate('/publics')}
-          disablePadding
-        >
-          <ListItemButton>
-            <ListItemIcon>
-              <PublicIcon sx={{ fontSize: 30, color: '#616161' }} />
-            </ListItemIcon>
-            <div className="itemtext">Public Shares</div>
-          </ListItemButton>
-        </ListItem>
-
-        <ListItem
-          key={'private'}
-          onClick={() => navigate('/private')}
-          disablePadding
-        >
-          <ListItemButton>
-            <ListItemIcon>
-              <ShieldIcon sx={{ fontSize: 30, color: '#616161' }} />
-            </ListItemIcon>
-            <div className="itemtext">Private shared</div>
           </ListItemButton>
         </ListItem>
       </List>

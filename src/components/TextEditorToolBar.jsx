@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   AppBar,
   MenuItem,
@@ -9,6 +10,7 @@ import {
   FormControl,
   InputLabel,
   TextField,
+  CircularProgress,
 } from '@mui/material';
 import {
   Save,
@@ -57,8 +59,10 @@ const EditorToolbar = ({
   toggleChat,
   toggleDrawer,
   folderId,
+  running,
 }) => {
   const [theme, setTheme] = useState('vs-dark');
+
   const [language, setLanguage] = useState('plaintext');
   const [fontWeight, setFontWeight] = useState('normal');
   const [fontSize, setFontSize] = useState(14);
@@ -474,9 +478,21 @@ const EditorToolbar = ({
           </Tooltip>
 
           <Tooltip title="Run Code" sx={{ marginRight: 1, marginLeft: 1 }}>
-            <IconButton color="inherit" onClick={runCode}>
-              <PlayArrow />
-            </IconButton>
+            {running ? (
+              <CircularProgress
+                sx={{
+                  color: '#e5e5e5',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+                size="30px"
+              />
+            ) : (
+              <IconButton color="inherit" onClick={runCode}>
+                <PlayArrow />
+              </IconButton>
+            )}
           </Tooltip>
         </MUIToolbar>
       </AppBar>
@@ -498,6 +514,8 @@ EditorToolbar.propTypes = {
   toggleChat: PropTypes.func.isRequired,
   toggleDrawer: PropTypes.func.isRequired,
   folderId: PropTypes.string.isRequired,
+  running: PropTypes.bool.isRequired,
+  setRunning: PropTypes.func.isRequired,
 };
 
 export default EditorToolbar;

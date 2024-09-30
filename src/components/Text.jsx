@@ -254,7 +254,7 @@ const Text = ({ text, setStateChange, stateChanged, handleOpenScript }) => {
   };
 
   const handleEdit = () => {
-    // Edit logic here
+    navigate(`/editor?textId=${text.id}`);
     handleMenuClose();
   };
 

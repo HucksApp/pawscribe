@@ -233,7 +233,7 @@ const File = ({ file, setStateChange, stateChanged, handleOpenFile }) => {
   };
 
   const handleEdit = () => {
-    // Edit logic here
+    navigate(`/editor?fileId=${file.id}`);
     handleMenuClose();
   };
 

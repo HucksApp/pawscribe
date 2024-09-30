@@ -7,17 +7,21 @@ import { Box } from '@mui/material';
 import axios from 'axios';
 import ConsoleDrawer from './ConsoleDrawer';
 import PropTypes from 'prop-types';
-import { useNavigate /*useLocation*/ } from 'react-router-dom';
+import { useNavigate /*, useLocation*/ } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { setProject, selectProject } from '../store/projectSlice';
+// import { addFile } from '../store/fileSlice';
 import { useSearchParams } from 'react-router-dom';
 import ProjectDrawer from './ProjectDrawer';
 import '../css/editor.css';
 import hashSHA256 from '../utils/hash';
 import DataQueueCache from '../store/queue';
 import socket from '../utils/transport';
+import getFileContent from '../utils/projectBlob';
+// import { addFileBlob } from '../store/fileBlobSlice';
 
 const TextEditor = ({ setStateChange }) => {
+  const [running, setRunning] = useState(false);
   const editorRef = useRef(null);
   const navigate = useNavigate();
   const [options, setOptions] = useState({
@@ -30,7 +34,7 @@ const TextEditor = ({ setStateChange }) => {
   const base = process.env.REACT_APP_BASE_API_URL;
   const token = localStorage.getItem('jwt_token');
   const [searchParams] = useSearchParams();
-  const [consoleOutput, setConsoleOutput] = useState('');
+  //const [consoleOutput, setConsoleOutput] = useState('');
   //const [stateChanged, setStateChanged] = useState(false);
   const [editorContent, setEditorContent] = useState('');
   const [currentItem, setCurrentItem] = useState({}); // current Data
@@ -47,60 +51,129 @@ const TextEditor = ({ setStateChange }) => {
   const textId = searchParams.get('textId'); // project ID
   //const location = useLocation();
   const project = useSelector(selectProject);
+  const filesblobIn = useSelector(state => state.fileBlobs);
+  const textsIn = useSelector(state => state.texts);
+  console.log('file id =====>', fileId);
+  const fetchFolderTree = async () => {
+    try {
+      const response = await axios.get(
+        `${base}/Api/v1/folders/${folderId}/tree`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.data.folder.fx) response.data.folder.fx = {};
+      console.log(response.data.folder);
+      dispatch(setProject(response.data.folder));
+    } catch (error) {
+      console.error('Failed to fetch folder contents:', error);
+    }
+  };
+
+  const fetchScript = async () => {
+    try {
+      const response = await axios.get(`${base}/Api/v1/text/${textId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      handleSetEditorContent(response.data.content);
+    } catch (error) {
+      console.log('Failed to fetch folder contents:', error);
+    }
+  };
+
+  const fetchFile = async () => {
+    console.log('hereeee------>');
+    try {
+      const { fetchBlobContent, loading } = getFileContent(fileId);
+      if (!loading) {
+        const content = fetchBlobContent();
+        console.log('hereeee------>', content);
+        handleSetEditorContent(content);
+      }
+    } catch (error) {
+      console.log('Failed to fetch folder contents:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchFolderTree = async () => {
-      try {
-        const response = await axios.get(
-          `${base}/Api/v1/folders/${folderId}/tree`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+    // Define the function to add file to queue
+    const addFileQueue = () => {
+      if (fileId && editorContent) {
+        DataQueueCache.setDataQueue(
+          `file_${fileId}`,
+          { id: fileId, content: editorContent },
+          24 * 60 * 60 * 1000 // 24 hours TTL
         );
-        if (!response.data.folder.fx) response.data.folder.fx = {};
-        console.log(response.data.folder);
-        dispatch(setProject(response.data.folder));
-      } catch (error) {
-        console.error('Failed to fetch folder contents:', error);
       }
     };
-    console.log(folderId);
-    if (folderId != '' && folderId != null) fetchFolderTree();
+    // When component is unmounted, add the file to the queue
+    return () => {
+      addFileQueue();
+    };
+  }, [fileId, editorContent]);
+
+  useEffect(() => {
+    // Define the function to add script(text) to queue
+    const addScriptQueue = () => {
+      if (textId && editorContent) {
+        DataQueueCache.setDataQueue(
+          `text_${textId}`,
+          { id: textId, content: editorContent },
+          24 * 60 * 60 * 1000 // 24 hours TTL
+        );
+      }
+    };
+    // When component is unmounted, add the script to the queue
+    return () => {
+      addScriptQueue();
+    };
+  }, [textId, editorContent]);
+
+  useEffect(() => {
+    socket.on('code_result', () => {
+      setRunning(false);
+    });
+  }, [running]);
+
+  useEffect(() => {
+    const handleInfoExe = data => {
+      Notify({
+        message: data.message,
+        type: 'info',
+      });
+    };
+    const handleErrorExe = data => {
+      Notify({
+        message: data.message,
+        type: 'error',
+      });
+    };
+    socket.on('error_result', handleErrorExe);
+    socket.on('info_result', handleInfoExe);
+    return () => {
+      socket.off('error_result', handleErrorExe);
+      socket.off('info_result', handleInfoExe);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (folderId !== '' && folderId !== null) {
+      fetchFolderTree();
+    }
   }, [folderId]);
 
-  // useEffect(() => {
-  //   const fetchFileEdit = async () => {
-  //     try {
-  //       const response = await axios.get(`${base}/Api/v1/files/${fileId}`, {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       });
-  //       return response.data.text();
-  //     } catch (error) {
-  //       console.log(error); // handle with notify
-  //     }
-  //   };
-  //   if (fileId) {
-  //     const fileContent = fetchFileEdit();
-  //     setEditorContent(fileContent);
-  //   }
-  // }, [fileId]);
+  useEffect(() => {
+    const handleDbChanged = () => {
+      if (folderId != '' && folderId != null) fetchFolderTree();
+    };
 
-  // useEffect(() => {
-  //   const fetchTextEdit = async () => {
-  //     try {
-  //       const response = await axios.get(`${base}/Api/v1/texts/${textId}`, {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       });
-  //       return response.data.content;
-  //     } catch (error) {
-  //       console.log(error); // handle with notify
-  //     }
-  //   };
-  //   if (textId) {
-  //     const textContent = fetchTextEdit();
-  //     setEditorContent(fileContent);
-  //   }
-  // }, [textId]);
+    socket.on('db_changed', handleDbChanged);
+
+    return () => {
+      socket.off('db_changed', handleDbChanged);
+    };
+  }, [socket]);
 
   const toggleChat = () => {
     setChatOpen(!chatOpen);
@@ -108,6 +181,9 @@ const TextEditor = ({ setStateChange }) => {
 
   const toggleDrawer = () => {
     console.log(open);
+    if (open === false) {
+      socket.emit('start_terminal', {});
+    }
     setOpen(!open);
   };
 
@@ -121,6 +197,44 @@ const TextEditor = ({ setStateChange }) => {
 
   const handleEditorDidMount = editor => {
     editorRef.current = editor;
+    if (fileId && editor) {
+      const cachedDataQueue = DataQueueCache.getDataQueue(`file_${fileId}`);
+      console.log('Cached content for fileId:', cachedDataQueue); // Log cached content
+      if (cachedDataQueue) {
+        console.log('Setting cached content to editor.'); // Log setting of cached content
+        console.log('Cached content for fileId 2:', cachedDataQueue);
+        handleSetEditorContent(cachedDataQueue.content);
+      } else {
+        const inMemo = filesblobIn.find(blob => blob.id === fileId.toString());
+        if (inMemo) {
+          inMemo.blob
+            .text()
+            .then(content => {
+              console.log('Setting blob content to editor.'); // Log setting of blob content
+              handleSetEditorContent(content);
+            })
+            .catch(err => {
+              console.error('Error reading blob content:', err);
+            });
+        } else {
+          fetchFile(); // fetch from API if not found in memory
+        }
+      }
+    } else if (textId && editor) {
+      const cachedDataQueue = DataQueueCache.getDataQueue(`text_${textId}`);
+      if (cachedDataQueue) {
+        console.log('Cached content for textId:', cachedDataQueue.content); // Log cached content
+        handleSetEditorContent(cachedDataQueue.content);
+      } else {
+        const inMemo = textsIn.find(text => text.id === textId);
+        if (inMemo) {
+          console.log('Memoized content found:', inMemo.content); // Log memoized content
+          handleSetEditorContent(inMemo.content);
+        } else {
+          fetchScript(); // fetch from API if not found in memory
+        }
+      }
+    }
   };
 
   const handleChangeOptions = newOptions => {
@@ -199,6 +313,87 @@ const TextEditor = ({ setStateChange }) => {
   };
 
   const handleSaveSync = async () => {
+    if (folderId) await handleProjectSync();
+    else if (fileId) await handleFileSync();
+    else if (textId) await handleScriptSync();
+  };
+
+  const handleFileSync = async () => {
+    const payload = {
+      content: editorContent,
+      file_id: fileId,
+    };
+    try {
+      const response = await axios.post(`${base}/Api/v1/files/save`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Assuming `token` is available in your component
+        },
+      });
+      console.log(response);
+      Notify({ message: response.data.message, type: 'success' });
+    } catch (error) {
+      console.log(error);
+
+      // Check if error.response exists before accessing error.response.data
+      if (error.response) {
+        if (
+          error.response.data.message &&
+          error.response.data.message === 'Token has expired'
+        ) {
+          navigate('/');
+        } else {
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
+        }
+      } else {
+        // Handle other errors (e.g., network errors, no response from server)
+        Notify({
+          message: `Error: ${error.message}. Something went wrong.`,
+          type: 'error',
+        });
+      }
+    }
+  };
+
+  const handleScriptSync = async () => {
+    const payload = {
+      content: editorContent,
+      text_id: textId,
+    };
+    try {
+      const response = axios.post(`${base}/Api/v1/text/save`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      Notify({ message: response.data.message, type: 'success' });
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        if (
+          error.response.data.message &&
+          error.response.data.message === 'Token has expired'
+        ) {
+          navigate('/');
+        } else {
+          Notify({
+            message: `${error.message}. ${error.response.data.message}`,
+            type: 'error',
+          });
+        }
+      } else {
+        // Handle other errors (e.g., network errors, no response from server)
+        Notify({
+          message: `Error: ${error.message}. Something went wrong.`,
+          type: 'error',
+        });
+      }
+    }
+  };
+
+  const handleProjectSync = async () => {
     console.log(dataQueue);
 
     const updatedQueue = await new Promise(resolve => {
@@ -210,9 +405,9 @@ const TextEditor = ({ setStateChange }) => {
                 ...queue,
                 { ...currentItem, currentHash: hashSHA256(editorContent) },
               ]
-            : [...queue]; // Make sure to use `queue` instead of `prev`
+            : [...queue];
 
-        resolve(newQueue); // Resolve the promise with the updated queue
+        resolve(newQueue);
         return newQueue;
       });
     });
@@ -285,7 +480,7 @@ const TextEditor = ({ setStateChange }) => {
     console.log(isPublic);
   };
 
-  const runCode = async () => {
+  const runProjectSrc = () => {
     socket.emit('run_code', {
       parent_folder_id: folderId || null,
       type:
@@ -293,46 +488,56 @@ const TextEditor = ({ setStateChange }) => {
           ? currentItem.item.fx.type
           : null,
       entry_point_id:
-        currentItem.item && currentItem.item.fx
+        currentItem.item && currentItem.item.fx && currentItem.item.fx.file_id
           ? currentItem.item.fx.file_id
-          : null,
+          : currentItem.item &&
+              currentItem.item.fx &&
+              currentItem.item.fx.text_id
+            ? currentItem.item.fx.text_id
+            : null,
       language: options.language,
-      code: fileId || textId ? editorContent : null,
     });
-    setIsConsoleOpen(true);
-
-    socket.on('code_result', data => {
-      if (data.valid) {
-        console.log(data.output);
-        setConsoleOutput(data.output);
-      } else {
-        Notify({
-          message: `${data.message}`,
-          type: 'error',
-        });
-      }
-    });
-    console.log('here');
-    console.log(consoleOutput);
-
-    // setIsConsoleOpen(true);
-    // try {
-    //   const response = await axios.post('/api/execute', {
-    //     code: editorContent,
-    //     language: options.language,
-    //   });
-    //   setConsoleOutput(response.data.output);
-    //   console.log(consoleOutput);
-    // } catch (error) {
-    //   console.error('Error executing code:', error);
-    //   setConsoleOutput('Error executing code');
-    // }
   };
 
+  const runFileSrc = () => {
+    socket.emit('run_code', {
+      type: 'File',
+      entry_point_id: fileId,
+      language: options.language,
+      code: editorContent,
+    });
+  };
+
+  const runScriptSrc = () => {
+    socket.emit('run_code', {
+      type: 'Text',
+      entry_point_id: textId,
+      language: options.language,
+      code: editorContent,
+    });
+  };
+
+  const runCode = async () => {
+    setRunning(true);
+    if (folderId) runProjectSrc();
+    if (fileId) runFileSrc();
+    if (textId) runScriptSrc();
+    setIsConsoleOpen(true);
+  };
   const handleSetEditorContent = content => {
     setEditorContent(content);
+
     if (editorRef.current) {
-      editorRef.current.setValue(content); // Directly update the editor content
+      const model = editorRef.current.getModel();
+
+      if (model) {
+        model.setValue(content); // Set the content safely
+        console.log('Editor content set to:', content);
+      } else {
+        console.error('Model not found for the editor.');
+      }
+    } else {
+      console.error('EditorRef is not initialized.');
     }
   };
 
@@ -352,6 +557,7 @@ const TextEditor = ({ setStateChange }) => {
         toggleChat={toggleChat}
         toggleDrawer={toggleDrawer}
         folderId={folderId}
+        running={running}
       />
       <Box className="editorcase" sx={{ height: '80vh', width: '100%' }}>
         <div className="editorcase">
@@ -395,7 +601,6 @@ const TextEditor = ({ setStateChange }) => {
         onClose={() => setIsConsoleOpen(!isConsoleOpen)}
         code={editorContent}
         language={options.language}
-        consoleOutput={consoleOutput}
         themeType={options.theme}
       />
     </Box>
