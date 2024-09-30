@@ -3,7 +3,7 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from flask_jwt_extended.exceptions import NoAuthorizationError, JWTExtendedException
 from flask import jsonify
 from db.models.user import User
-import jwt  # Ensure you import the jwt module
+from jwt import ExpiredSignatureError  # Ensure you import the jwt module
 
 
 def token_required(f):
@@ -27,25 +27,16 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-            # Verify the JWT in the request
             verify_jwt_in_request()
-
-            # Get the identity of the current user
             current_user_id = get_jwt_identity()
-
-            # Fetch the user from the database
             current_user = User.query.get(current_user_id)
             if not current_user:
                 raise NoAuthorizationError("User not found!")
-
-            # Call the original function with the current user
             return f(current_user, *args, **kwargs)
-
-        except jwt.ExpiredSignatureError:
-            # Handle token expiration
-            return jsonify({"msg": "Token has expired. Please log in again."}), 401
+        except ExpiredSignatureError as e:
+            return
         except Exception as e:
-            # Handle other exceptions
-            return jsonify({"msg": str(e)}), 401
-
+            raise JWTExtendedException(str(e))
+    # to avoid wrapper function blocking access to <f>
+    wraps.__name__ = f.__name__
     return decorated

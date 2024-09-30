@@ -149,7 +149,6 @@ def execute_command(container, command, cwd=None, current_user_id=None):
         full_command = f"cd {cwd} && {command}"
         exit_code, output = container.exec_run(f"/bin/sh -c '{full_command}'")
 
-        print("output ====>", exit_code)
         # Handle directory changes
         if command.startswith('cd ') and exit_code == 0:
             new_cwd_parts = command.split('cd', 1)[-1].strip()

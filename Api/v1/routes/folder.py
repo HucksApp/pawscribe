@@ -139,7 +139,6 @@ def handle_get_all_folders(current_user):
     return jsonify(result), 200
 
 
-
 @folders_bp.route('/add', methods=['POST'])
 @token_required
 def handle_add_folder(current_user):
@@ -161,7 +160,8 @@ def handle_add_folder(current_user):
 
     if not foldername:
         return jsonify({"message": "Folder name is required"}), 400
-    existing_name = Folder.query.filter_by(owner_id=current_user.id, foldername=foldername).first() or None
+    existing_name = Folder.query.filter_by(
+        owner_id=current_user.id, foldername=foldername).first() or None
     if existing_name:
         return jsonify({"message": "Folder name Already Exist"}), 400
     new_folder = Folder(
@@ -191,8 +191,9 @@ def handle_get_folder_tree(current_user, folder_id):
     if folder.owner_id != current_user.id:
         return jsonify({"message": "Permission denied"}), 403
 
-    tree = get_folder_tree(folder_id)
+    tree = get_folder_tree(folder_id, current_user.id)
     return jsonify({"valid": True, "folder": tree}), 200
+
 
 @folders_bp.route('/text', methods=['GET'])
 @token_required
@@ -238,7 +239,7 @@ def handle_sub_folders(current_user, folder_id):
     if folder.owner_id != current_user.id:
         msg.update({"message": "Permission denied"})
         return jsonify(msg), 403
-    subfolders_list = get_child_subfolders(folder_id, True)
+    subfolders_list = get_child_subfolders(folder_id, current_user.id, True)
     msg.update({"message": "success", "valid": True,
                "folders": subfolders_list})
     return jsonify(msg), 200
@@ -253,12 +254,10 @@ def handle_get_all_ffxs(current_user, folder_id):
     if folder.owner_id != current_user.id:
         msg.update({"message": "Permission denied"})
         return jsonify(msg), 403
-    children = get_all_children(folder, True)
-    print(children)
+
+    children = get_all_children(folder, current_user.id, True)
     msg.update({"message": "success", "valid": True, "children": children})
     return jsonify(msg), 200
-
-
 
 
 @folders_bp.route('/<int:folder_id>/texts', methods=['GET'])
@@ -277,7 +276,7 @@ def handle_folder_scripts(current_user, folder_id):
     if folder.owner_id != current_user.id:
         return jsonify({"message": "Permission denied"}), 403
 
-    texts = get_child_texts(folder_id, True)
+    texts = get_child_texts(folder_id, current_user.id, True)
     return jsonify({"message": "success", "texts": texts, "valid": True}), 200
 
 
@@ -297,7 +296,7 @@ def handle_folder_files(current_user, folder_id):
     if folder.owner_id != current_user.id:
         return jsonify({"message": "Permission denied"}), 403
 
-    files = get_child_files(folder_id, True)
+    files = get_child_files(folder_id, current_user.id, True)
     return jsonify({"message": "success", "valid": True, "files": files}), 200
 
 
@@ -318,27 +317,23 @@ def handle_save_changes(current_user):
         parent_folder_id = fx.get('parent_folder_id')
 
         # Log object details (remove/comment this in production)
-        print(f"Processing: type={obj_type}, id={id}, name={name}, hash={file_hash}")
 
-        msg = {"message": f"Failed to process {obj_type} with id {id}.", "valid": False}  # Default message in case of failure
+        msg = {"message": f"Failed to process {obj_type} with id {
+            id}.", "valid": False}  # Default message in case of failure
 
         # Handle based on the type (File or Text)
         try:
             if obj_type == 'File':
-                msg = handle_file_sync(fx, id, file_hash, content, name, parent_folder_id, current_user)
+                msg = handle_file_sync(
+                    fx, id, file_hash, content, name, parent_folder_id, current_user)
             elif obj_type == 'Text':
-                msg = handle_text_sync(fx, id, file_hash, content, name, parent_folder_id, current_user)
-            print(msg)
+                msg = handle_text_sync(
+                    fx, id, file_hash, content, name, parent_folder_id, current_user)
         except Exception as e:
             raise e
-            # msg['message'] = f"Error processing {obj_type} with id {id}: {str(e)}"
-            # msg['valid'] = False
-            # print(f"Error processing {obj_type}: {e}")
 
         all_msgs.append(msg)  # Append each result to all_msgs
-
     # Return all results at once
-    print(all_msgs)
     return jsonify(all_msgs), 200
 
 
@@ -362,7 +357,6 @@ def handle_include(current_user):
     name = data.get('name')
     type = data.get('type')
     parent_id = data.get('parent_folder_id')
-    print(f'data ===========> [{ data }]')
     if not type or not parent_id:
         msg.update({'message': '<parent_folder_id> and <type> are required'})
         return jsonify(msg), 400
@@ -384,14 +378,11 @@ def handle_include(current_user):
 
     elif type == 'File':
         # Handle File type inclusion
-        print(data)
         new_fxs = handle_file_inclusion(
             data, current_user, parent_id, parent_folder, name, msg)
-        print(new_fxs)
 
     elif type == 'Folder':
         # Handle Folder type inclusion
-        print(f'in   -------> {type}')
         new_fxs = handle_folder_inclusion(
             data, current_user, parent_folder, name, parent_id, msg)
 
@@ -423,11 +414,11 @@ def handle_delete_ffs(current_user, fxs_id):
         return jsonify({"message": "Permission denied"}), 403
 
     if fxs.type == 'Text':
-        handle_text_exclusion(fxs)
+        handle_text_exclusion(fxs, current_user.id)
     elif fxs.type == 'File':
         handle_file_exclusion(fxs)
     elif fxs.type == 'Folder':
-        handle_folder_exclusion(fxs)
+        handle_folder_exclusion(fxs, current_user.id)
     else:
         return jsonify({"message": "Invalid type"}), 400
 
@@ -450,17 +441,14 @@ def handle_download_folder(current_user, folder_id):
     folder = Folder.query.get_or_404(folder_id)
     if folder.owner_id != current_user.id:
         return jsonify({"message": "Permission denied"}), 403
-
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        add_folder_to_zip(folder_id, zipf)
+        add_folder_to_zip(zipf, folder_id, current_user.id)
     zip_buffer.seek(0)
-
     return send_file(zip_buffer, as_attachment=True, download_name=f'{folder.foldername}.zip')
 
 
-
-folders_bp.route('/<int:folder_id>/remove', methods=['DELETE'])
+@folders_bp.route('/<int:folder_id>/remove', methods=['DELETE'])
 @token_required
 def handle_delete_folder(current_user, folder_id):
     msg = {"message": "", "valid": False}
@@ -474,7 +462,7 @@ def handle_delete_folder(current_user, folder_id):
 
     # Check for any subfolders
     existing_parentsfx: list[FolderFxS] = FolderFxS.query.filter_by(
-        folder_id=folder.id, type='Folder').all()
+        folder_id=folder.id, type='Folder', owner_id=current_user.id).all()
     existing_parents: list[Folder] = [Folder.query.get(
         f.parent_id) for f in existing_parentsfx]
     if len(existing_parents) > 0:
@@ -489,7 +477,7 @@ def handle_delete_folder(current_user, folder_id):
 
     # Perform the deletion
     try:
-        remove_folder_and_contents(folder)
+        remove_folder_and_contents(folder, current_user.id)
         db.session.commit()
     except Exception as e:
         db.session.rollback()

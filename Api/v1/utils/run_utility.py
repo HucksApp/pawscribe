@@ -41,7 +41,7 @@ def clean_temp_dir(temp_dir: str) -> None:
         shutil.rmtree(temp_dir)
 
 
-def create_temp_structure(folder: Folder, base_path: str = '', entry_point_id: int = None) -> tuple:
+def create_temp_structure(folder: Folder, current_user_id, base_path: str = '', entry_point_id: int = None) -> tuple:
     """
     Recursively retrieves files, texts, and subfolders from the database and 
     creates a corresponding structure in a temporary directory.
@@ -51,13 +51,15 @@ def create_temp_structure(folder: Folder, base_path: str = '', entry_point_id: i
     :param entry_point_id: ID of the entry point (file or text) to be marked.
     :return: Tuple containing the entry point (file or text) and its path.
     """
+   
     # Create a directory for the current folder in the temporary folder
     folder_path = os.path.join(base_path, folder.foldername)
     os.makedirs(folder_path, exist_ok=True)
-
+   
+    print("hereeeee===folder path", folder.id)
     # Retrieve files and texts in the current folder
-    files_objs = get_child_files(folder.id)
-    texts = get_child_texts(folder.id)
+    files_objs = get_child_files(folder.id, current_user_id)
+    texts = get_child_texts(folder.id, current_user_id)
 
     entry_point = None
     entry_point_path = None  # Capture the full path of the entry point
@@ -84,10 +86,10 @@ def create_temp_structure(folder: Folder, base_path: str = '', entry_point_id: i
             entry_point_path = text_path
 
     # Recursively handle subfolders
-    subfolders = get_child_subfolders(folder.id)
+    subfolders = get_child_subfolders(folder.id, current_user_id)
     for subfolder in subfolders:
         ep, ep_path = create_temp_structure(
-            subfolder['folder'], folder_path, entry_point_id)
+            subfolder['folder'], current_user_id ,folder_path, entry_point_id)
         # If an entry point is found in a subfolder, propagate it up
         if ep:
             entry_point = ep
@@ -96,7 +98,7 @@ def create_temp_structure(folder: Folder, base_path: str = '', entry_point_id: i
     return entry_point, entry_point_path
 
 
-def project_structure_folder(parent_folder_id: int, entry_point_id: int, temp_dir: str) -> tuple:
+def project_structure_folder(parent_folder_id: int, current_user_id:str, entry_point_id: int, temp_dir: str) -> tuple:
     """
     Retrieve files and scripts from the database based on the parent folder ID and 
     entry point ID. This method will create the folder structure inside the 
@@ -112,10 +114,10 @@ def project_structure_folder(parent_folder_id: int, entry_point_id: int, temp_di
     folder = Folder.query.get(parent_folder_id)
     if not folder:
         raise ValueError("Folder not found")
-
+    print("here ===>", folder)
     # Recursively retrieve the folder structure and find the entry point
     entry_point, entry_point_path = create_temp_structure(
-        folder, temp_dir, entry_point_id)
+        folder, current_user_id, temp_dir, entry_point_id)
     print(f'entry_point =======>{entry_point}')
     return entry_point, entry_point_path
 
@@ -167,7 +169,7 @@ def project_structure_filexscript(id: int, type: str) -> str:
     return temp_dir
 
 
-def determine_entry_point(parent_folder_id: int, entry_point_id: int, type: str, temp_dir: str) -> tuple:
+def determine_entry_point(parent_folder_id: int,current_user_id:str, entry_point_id: int, type: str, temp_dir: str) -> tuple:
     """
     Determine the entry point based on folder hierarchy or item type.
 
@@ -177,8 +179,9 @@ def determine_entry_point(parent_folder_id: int, entry_point_id: int, type: str,
     :param temp_dir: The path to the temporary directory.
     :return: Tuple containing the entry point (file or text) and its path.
     """
+    print(f'entry id {entry_point_id} \n  parent id {parent_folder_id} \n type {type} \n temp dir {temp_dir}')
     if parent_folder_id:
-        return project_structure_folder(parent_folder_id, entry_point_id, temp_dir)
+        return project_structure_folder(parent_folder_id,current_user_id, entry_point_id, temp_dir)
     elif type == 'File':
         return project_structure_filexscript(entry_point_id, 'file')
     elif type == 'Text':

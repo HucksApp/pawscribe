@@ -61,7 +61,7 @@ def handle_file_sync(fx, file_id: Union[int, None], file_hash: Union[str, None],
     if file_id:
         existing_file = File.query.get(file_id)
     elif file_hash:
-        existing_file = File.query.filter_by(hash=file_hash).first()
+        existing_file = File.query.filter_by(hash=file_hash, owner_id=current_user.id).first()
     if existing_file:
         current_hash = File.generate_hash(content.encode('utf-8'))
         if current_hash != existing_file.hash:
@@ -73,10 +73,11 @@ def handle_file_sync(fx, file_id: Union[int, None], file_hash: Union[str, None],
                 existing_file.hash = current_hash
                 existing_file.updated_at = datetime.utcnow()
                 db.session.commit()
-                msg = {"message": f"{existing_file.filename} content was updated.", "valid": True}
+                msg = {"message": f"{
+                    existing_file.filename} content was updated.", "valid": True}
             else:
                 file_with_new_content = File.query.filter_by(
-                    hash=current_hash).first()
+                    hash=current_hash, owner_id=current_user_id).first()
 
                 if file_with_new_content:
                     new_fx = FolderFxS(
@@ -89,7 +90,8 @@ def handle_file_sync(fx, file_id: Union[int, None], file_hash: Union[str, None],
                     db.session.add(new_fx)
                     db.session.commit()
 
-                    msg = {"message": f"File with new content referenced as {new_fx.name}.", "valid": True}
+                    msg = {"message": f"File with new content referenced as {
+                        new_fx.name}.", "valid": True}
                 else:
                     new_file = File(
                         filename=name,
@@ -110,7 +112,8 @@ def handle_file_sync(fx, file_id: Union[int, None], file_hash: Union[str, None],
                     db.session.add(new_fx)
                     db.session.commit()
 
-                    msg = {"message": f"New file referenced as {new_fx.name}", "valid": True}
+                    msg = {"message": f"New file referenced as {
+                        new_fx.name}", "valid": True}
     else:
         msg = {"message": f"No file found with the given hash or id.", "valid": False}
 
@@ -143,7 +146,7 @@ def handle_text_sync(fx, text_id: Union[int, None], text_hash: Union[str, None],
 
     existing_script = None
     if text_hash:
-        existing_script = Text.query.filter_by(hash=text_hash).first()
+        existing_script = Text.query.filter_by(hash=text_hash, owner_id=current_user.id).first()
     elif text_id:
         existing_script = Text.query.get(text_id)
 
@@ -163,7 +166,7 @@ def handle_text_sync(fx, text_id: Union[int, None], text_hash: Union[str, None],
                 msg = {"message": "Text content updated.", "valid": True}
             else:
                 script_with_new_content = Text.query.filter_by(
-                    hash=current_hash).first()
+                    hash=current_hash, owner_id=current_user.id).first()
 
                 if script_with_new_content:
                     new_fx = FolderFxS(
@@ -205,4 +208,3 @@ def handle_text_sync(fx, text_id: Union[int, None], text_hash: Union[str, None],
         msg = {"message": f"No text found with the given hash or id.", "valid": False}
 
     return msg
-

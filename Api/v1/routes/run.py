@@ -12,6 +12,8 @@ from ..utils.run_utility import determine_entry_point, clean_temp_dir
 from ..utils.required import token_required
 from ..store.manager import container_manager
 from db.models.folder import Folder
+from db.models.file import File
+from db.models.text import Text
 from ..utils.data_sync import handle_mkdir_command, handle_move_or_copy_command, handle_touch_command, handle_rm_command
 import os
 import re
@@ -60,7 +62,7 @@ def handle_start_terminal(current_user, data):
 
         # Determine the entry point (file or folder)
         entry_point = determine_entry_point(
-            parent_folder_id, entry_point_id, type, temp_dir)
+            parent_folder_id, current_user.id, entry_point_id, type, temp_dir)
 
         # Create the Docker container environment
         container = create_docker_environment(
@@ -93,15 +95,17 @@ def handle_run_code(current_user, data):
     Executes code in the user's active Docker container.
 
     Input (via WebSocket):
-    - parent_folder_id: ID of the parent folder for the code.
-    - entry_point_id: ID of the entry point file for execution.
+    - parent_folder_id: ID of the parent folder for the code (optional if executing a single script).
+    - entry_point_id: ID of the entry point file for execution (optional if executing a single script).
     - type: Type of the environment (file or folder).
     - language: Programming language (required).
+    - code: The code content itself (optional, required if no parent_folder_id).
 
     Output (via WebSocket):
     - Emits the result of the code execution, including exit code and output.
 
     Steps:
+    - If no parent_folder_id is provided, treat the code as a direct script.
     - Check if there’s an active container for the user; if not, create one.
     - Execute the code inside the container and return the result.
     """
@@ -109,7 +113,8 @@ def handle_run_code(current_user, data):
     entry_point_id = data.get('entry_point_id')
     type = data.get('type')
     language = data.get('language')
-    print(data)
+    # Get the script content if no parent_folder_id is provided
+    code = data.get('code')
 
     if not language:
         emit('code_result', {'message': 'Language is required'}, 400)
@@ -146,14 +151,33 @@ def handle_run_code(current_user, data):
             container = container_info['container']
             temp_dir = container_info['temp_dir']
 
-        # Determine the entry point for both new and existing containers
-        entry_point, entry_point_path = determine_entry_point(
-            parent_folder_id, entry_point_id, type, temp_dir)
+        # If no parent_folder_id is provided, treat the code as a direct script
+        if not parent_folder_id:
+            # Create a temporary file for the code in the container's temp directory
+            # Adjust the extension based on the language
+            script_file_name = 'doc'
+            if type == 'file':
+                file = File.query.get_or_404(entry_point_id)
+                script_file_name = file.filename
+            if type == 'text':
+                text = Text.query.get_or_404(entry_point_id)
+                script_file_name = f"temp_script.{text.file_type}"
 
-        # Normalize the entry point path
-        entry_point_name = entry_point['file'].filename
-        entry_point_path = entry_point_path.replace(
-            temp_dir, container_manager.container_root)
+            script_path = os.path.join(temp_dir, script_file_name)
+
+            # Write the provided code to the temporary file
+            with open(script_path, 'w') as script_file:
+                script_file.write(code)
+
+            # Adjust entry_point_path to this new file
+            entry_point_path = script_path.replace(
+                temp_dir, container_manager.container_root)
+        else:
+            # Determine the entry point for both new and existing containers if a folder is provided
+            entry_point, entry_point_path = determine_entry_point(
+                parent_folder_id, current_user.id, entry_point_id, type, temp_dir)
+            entry_point_path = entry_point_path.replace(
+                temp_dir, container_manager.container_root)
 
         # Execute the code inside the Docker container
         exit_code, output = execute_code(container, entry_point_path, language)
@@ -188,14 +212,14 @@ def handle_send_command(current_user, data):
     """
     command = data.get('command')
     if not command:
-        emit('command_result', {
+        emit('error_result', {
              'message': 'Command is required', 'status': 400})
         return
 
     # Retrieve the active container info for the user
     container_info = container_manager.active_containers.get(current_user.id)
     if not container_info:
-        emit('command_result', {
+        emit('error_result', {
              'message': 'No active container found for user', 'status': 404})
         return
 
@@ -207,10 +231,9 @@ def handle_send_command(current_user, data):
 
         # Wild Card Not Yet Supported
         if '*' in command and any(substring in command for substring in ['mkdir', 'rm', 'cd', 'mv', 'touch']):
-            emit('command_result', {
-                'message': f'Command Failed',
+            emit('info_result', {
                 'exit_code': 1,
-                'output': 'Use of wild card like *  is not yet supported for '
+                'message': 'Use of wild card like *  is not yet supported for '
                 'structure : create, remove, alter, navigate',
                 'status': 400
             })
@@ -224,30 +247,37 @@ def handle_send_command(current_user, data):
             project = Folder.query.get(project_id)
             if any(cmd in task for cmd in ['mv', 'mkdir', 'rm', 'touch']) and (not project_id or (project and project.foldername not in cwd)):
 
-                emit('command_result', {
-                    'message': f'Command Failed',
+                emit('error_result', {
                     'exit_code': 1,
-                    'output': 'Use  structure : create, remove, alter, navigate'
+                    'message': 'Use  structure : create, remove, alter, navigate'
                     ' in a None Project Folder root is not allowed',
                     'status': 400
                 })
                 return
              # Handle touch, mv/cp, and mkdir <structure mutation> commands specifically
+            reconstruction_task = None
             if task.startswith("touch "):
-                refined_task = handle_touch_command(task, current_user.id)
-                if refined_task:
-                    command = command.replace(task, refined_task)
+                reconstruction_task = handle_touch_command(
+                    task, current_user.id)
+                if reconstruction_task:
+                    command = command.replace(task, reconstruction_task)
             elif task.startswith("mv ") or task.startswith("cp "):
-                handle_move_or_copy_command(task, current_user.id)
+                reconstruction_task = handle_move_or_copy_command(
+                    task, current_user.id)
             elif task.startswith("mkdir "):
-                handle_mkdir_command(task, current_user.id)
+                reconstruction_task = handle_mkdir_command(
+                    task, current_user.id)
             elif task.startswith("rm "):
-                handle_rm_command(task, current_user.id)
-
+                reconstruction_task = handle_rm_command(task, current_user.id)
+        if reconstruction_task:
+            emit('db_changed', {
+                'message': 'Ui structure reconstruct',
+                'exit_code': 0,
+                'status': 200
+            })
         # Execute the command in the Docker container
         exit_code, output, new_cwd_container = execute_command(
             container, command, cwd=cwd, current_user_id=current_user.id)
-        print("new cwd", new_cwd_container)
         # Update the container's working directory if it changed
         if new_cwd_container:
             container_manager.active_containers[current_user.id]['cwd'] = new_cwd_container

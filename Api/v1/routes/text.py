@@ -22,6 +22,49 @@ import subprocess
 text_bp = Blueprint('text', __name__, url_prefix='text')
 
 
+@text_bp.route('/save', methods=['POST'])
+@token_required
+def save_text(current_user):
+    msg = {"message": "", "valid": False}
+    data = request.get_json()
+    content = data.get('content')
+    text_id = data.get('text_id')
+    file_type = data.get('file_type')
+    text_hash = Text.generate_hash(content)
+    existing_text = Text.query.filter_by(
+        hash=text_hash, owner_id=current_user.id).first()
+    text = None
+
+    if existing_text and existing_text.id != text_id:
+        msg.update({'message': f'Script Content Dublication is not allowed. This Script exists :id: {
+                   existing_text.id}:'})
+        return jsonify(msg), 403
+    if text_id:
+        text: Text = Text.query.get(text_id)
+    if text:
+        if text.owner_id != current_user.id:
+            msg.update({'message': 'Permission denied'})
+            return jsonify(msg), 403
+
+        if text_hash == text.hash:
+            msg.update({'message': 'No Changes to save'})
+            return jsonify(msg), 403
+
+        text.content = content
+        text.hash = text_hash
+        db.session.commit()
+        msg.update({'message': 'Scripts Updated', 'valid': True})
+    else:
+        if not file_type:
+            msg.update({'message': '<file_type> is required for a new script'})
+            return jsonify(msg), 403
+        text = Text(content=content, file_type=file_type,
+                    owner_id=current_user.id)
+        msg.update({'message': 'Scripts Created', 'valid': True})
+
+    return jsonify(msg), 200
+
+
 @text_bp.route('/share', methods=['POST'])
 @token_required
 def share_text(current_user):
@@ -49,7 +92,8 @@ def share_text(current_user):
     shared_with_key = token_urlsafe(8) if private else None
     text_hash = Text.generate_hash(text_content)
 
-    existing_text = Text.query.filter_by(hash=text_hash).first()
+    existing_text = Text.query.filter_by(
+        hash=text_hash, owner_id=current_user.id).first()
     if existing_text:
         if existing_text.private == private and existing_text.file_type == file_type:
             msg.update(
@@ -169,12 +213,12 @@ def get_shared_text(text_id):
                'valid': True, 'file_type': text.file_type})
     return jsonify(msg), 200
 
+
 @text_bp.route('/private/<int:text_id>', methods=['GET'])
 @token_required
 def private_text(current_user, text_id):
     msg = {"message": "", "valid": False}
     text: Text = Text.query.get_or_404(text_id)
-    print(text.private, '111')
     if text.owner_id != current_user.id:
         msg.update({'message': 'Permission denied'})
         return jsonify(msg), 403
@@ -184,7 +228,6 @@ def private_text(current_user, text_id):
     else:
         text.private = True
     text.updated_at = datetime.now()
-    print(text.private, '222')
     db.session.commit()
     msg.update({"message": f"Script Set To {'Private' if text.private else 'Public'}",
                "valid": True, "text_id": text.id})
@@ -252,11 +295,10 @@ def save_text_to_file(current_user, text_id):
         return jsonify(msg), 403
     if not filename:
         filename = unique_name(extension, filename)
-    print(f'{filename}{extension} 1111111')
     if allowed_file(f'{filename}{extension}', msg):
-        print(f'{filename}{extension} 2222222')
         file_hash = File.generate_hash(text.content.encode('utf-8'))
-        existing_file = File.query.filter_by(hash=file_hash).first()
+        existing_file = File.query.filter_by(
+            hash=file_hash, owner_id=current_user.id).first()
         if existing_file:
             msg.update({'message': f'Content Dublication, File exist as {existing_file.filename} ',
                        'file_id': existing_file.id})
@@ -271,7 +313,6 @@ def save_text_to_file(current_user, text_id):
         db.session.add(file)
         db.session.commit()
         return jsonify(msg), 200
-    print(f'{filename}{extension}')
     msg.update({'message': 'File Not Supported'})
     return jsonify(msg), 409
 

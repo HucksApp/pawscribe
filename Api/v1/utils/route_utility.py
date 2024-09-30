@@ -10,12 +10,12 @@ from Api.__init__ import db
 import os
 
 
-def __find_all_decendent_subfolder(folder: Folder | int, indict=False) -> List[dict]:
+def __find_all_decendent_subfolder(folder: Folder | int, current_user_id, indict=False) -> List[dict]:
     """Find all subfolders of a folder recursively."""
     folder_id = folder.id if isinstance(folder, Folder) else folder
     folderlist: List[dict] = []  # Final list of all subfolders
     subfolders_to_process: List[FolderFxS] = FolderFxS.query.filter_by(
-        type='Folder', parent_id=folder_id).all()
+        type='Folder', parent_id=folder_id, owner_id=current_user_id).all()
     # Track processed folder IDs to prevent cycles
     processed_subfolders: Set[int] = set()
 
@@ -45,18 +45,18 @@ def __find_all_decendent_subfolder(folder: Folder | int, indict=False) -> List[d
 
         # Find subfolders of the current subfolder
         next_subfolders = FolderFxS.query.filter_by(
-            type='Folder', parent_id=current_subfolder.folder_id).all()
+            type='Folder', parent_id=current_subfolder.folder_id, owner_id=current_user_id).all()
         subfolders_to_process.extend(next_subfolders)
     return folderlist
 
 
-def __find_all_decendant_texts(folder: Folder, indict=False) -> List[dict[str, Text | FolderFxS]]:
+def __find_all_decendant_texts(folder: Folder, current_user_id, indict=False) -> List[dict[str, Text | FolderFxS]]:
     """Get all texts of a folder, including those in its subfolders."""
-    subfolders = __find_all_decendent_subfolder(folder)
+    subfolders = __find_all_decendent_subfolder(folder, current_user_id)
     texts: List[dict[str, Text | FolderFxS]] = []
     folder_id = folder.id
     direct_childs: List[FolderFxS] = FolderFxS.query.filter_by(
-        type='Text', parent_id=folder_id).all()
+        type='Text', parent_id=folder_id, owner_id=current_user_id).all()
     if indict:
         direct_child_texts = [
             {**Text.query.get_or_404(fx.text_id).to_dict(), 'fx': fx.to_dict()} for fx in direct_childs]
@@ -67,7 +67,7 @@ def __find_all_decendant_texts(folder: Folder, indict=False) -> List[dict[str, T
     for subfolder in subfolders:
         # Get all texts in each subfolder
         text_fxss: List[FolderFxS] = FolderFxS.query.filter_by(
-            type='Text', parent_id=subfolder['fx'].folder_id).all()
+            type='Text', parent_id=subfolder['fx'].folder_id, owner_id=current_user_id).all()
         for text_fxs in text_fxss:
             text: Text = Text.query.get_or_404(text_fxs.text_id)
             if indict:
@@ -78,13 +78,13 @@ def __find_all_decendant_texts(folder: Folder, indict=False) -> List[dict[str, T
     return texts
 
 
-def __find_all_decendent_files(folder: Folder, indict=False) -> List[dict[str, File | FolderFxS]]:
+def __find_all_decendent_files(folder: Folder, current_user_id, indict=False) -> List[dict[str, File | FolderFxS]]:
     """Get all files of a folder, including those in its subfolders."""
-    subfolders = __find_all_decendent_subfolder(folder)
+    subfolders = __find_all_decendent_subfolder(folder, current_user_id)
     folder_id = folder.id
     files: List[dict[str, File | FolderFxS]] = []
     direct_childs: List[FolderFxS] = FolderFxS.query.filter_by(
-        type='File', parent_id=folder_id).all()
+        type='File', parent_id=folder_id, owner_id=current_user_id).all()
     if indict:
         files.extend([{**File.query.get_or_404(fx.file_id).to_dict(),
                      'fx': fx.to_dict()} for fx in direct_childs])
@@ -95,7 +95,7 @@ def __find_all_decendent_files(folder: Folder, indict=False) -> List[dict[str, F
     for subfolder in subfolders:
         # Get all files in each subfolder
         file_fxss: List[FolderFxS] = FolderFxS.query.filter_by(
-            type='File', parent_id=subfolder['fx'].folder_id).all()
+            type='File', parent_id=subfolder['fx'].folder_id, owner_id=current_user_id).all()
         for file_fxs in file_fxss:
             file: File = File.query.get_or_404(file_fxs.file_id)
             if indict:
@@ -105,11 +105,11 @@ def __find_all_decendent_files(folder: Folder, indict=False) -> List[dict[str, F
     return files
 
 
-def __find_all_decendant(folder: Folder, indict=False) -> dict[str, List[dict[str, Folder | File | Text | FolderFxS]]]:
+def __find_all_decendant(folder: Folder,current_user_id, indict=False) -> dict[str, List[dict[str, Folder | File | Text | FolderFxS]]]:
     """Get all files, texts, and subfolders of a folder."""
-    files = __find_all_decendent_files(folder, indict)
-    texts = __find_all_decendant_texts(folder, indict)
-    folders = __find_all_decendent_subfolder(folder, indict)
+    files = __find_all_decendent_files(folder,current_user_id, indict)
+    texts = __find_all_decendant_texts(folder,current_user_id, indict)
+    folders = __find_all_decendent_subfolder(folder,current_user_id, indict)
     return {'files': files, 'texts': texts, "sub_folders": folders}
 
 
@@ -146,7 +146,7 @@ def handle_text_inclusion(data, current_user, parent_id, parent_folder, name, ms
         if not file_type:
             file_type = text.file_type
         is_referenced = FolderFxS.query.filter_by(
-            text_id=text_id).first() is not None
+            text_id=text_id,owner_id=current_user.id).first() is not None
         if is_referenced or not text.private:
             new_text = Text(content=text_content, file_type=file_type,
                             owner_id=current_user.id, shared_with_key=None)
@@ -158,7 +158,7 @@ def handle_text_inclusion(data, current_user, parent_id, parent_folder, name, ms
 
     elif not text_content and not text_id and text_hash:
         # Old script
-        existing = Text.query.filter_by(hash=text_hash).first()
+        existing = Text.query.filter_by(hash=text_hash, owner_id=current_user.id).first()
         if existing:
             text_id = existing.id
             file_type = existing.file_type
@@ -170,12 +170,11 @@ def handle_text_inclusion(data, current_user, parent_id, parent_folder, name, ms
     elif not text_content and not text_hash and text_id:
         text = Text.query.get_or_404(text_id)
         file_type = text.file_type
-
     else:
         msg.update({'message': 'Required Resources Incomplete'})
         return None
     existing_fxs = FolderFxS.query.filter_by(
-        parent_id=parent_id, text_id=text_id).first()
+        parent_id=parent_id, text_id=text_id, owner_id=current_user.id).first()
     if existing_fxs:
         msg.update({'message': f'{existing_fxs.name} has been added already to {
                    parent_folder.foldername}'})
@@ -210,7 +209,7 @@ def handle_file_inclusion(data, current_user, parent_id, parent_folder, name, ms
         if data.get('blank'):
             file_content_bytes = "".encode('utf-8')
             file_hash = File.generate_hash(file_content_bytes)
-            existing_blank: File = File.query.filter_by(hash=file_hash).first()
+            existing_blank: File = File.query.filter_by(hash=file_hash, owner_id=current_user.id).first()
             if existing_blank:
                 file_id = existing_blank.id
                 file = existing_blank
@@ -251,7 +250,7 @@ def handle_file_inclusion(data, current_user, parent_id, parent_folder, name, ms
         # Generate the hash based on bytes
         file_hash = File.generate_hash(file_content_bytes)
         is_referenced = FolderFxS.query.filter_by(
-            file_id=file_id).first() is not None
+            file_id=file_id, owner_id=current_user.id).first() is not None
 
         if (is_referenced or not file.private) and file.hash != file_hash:
             new_file = File(filename=name, data=file_content_bytes,
@@ -264,7 +263,7 @@ def handle_file_inclusion(data, current_user, parent_id, parent_folder, name, ms
 
     elif file_hash and not file_content_64 and not file_id:
         # Old or new and unchanged
-        file = File.query.filter_by(hash=file_hash).first()
+        file = File.query.filter_by(hash=file_hash, owner_id=current_user.id).first()
         if file:
             file_id = file.id
         else:
@@ -280,7 +279,7 @@ def handle_file_inclusion(data, current_user, parent_id, parent_folder, name, ms
         return None
 
     existing_fxs = FolderFxS.query.filter_by(
-        parent_id=parent_id, file_id=file_id).first()
+        parent_id=parent_id, file_id=file_id, owner_id=current_user.id).first()
     if existing_fxs:
         msg.update({'message': f'{file.filename} has been added already to {
                    parent_folder.foldername}'})
@@ -302,13 +301,13 @@ def handle_folder_inclusion(data, current_user, parent_folder, name, parent_id, 
         if not name:
             name = child_folder.foldername
 
-        parent_subfolders = __find_all_decendent_subfolder(parent_id, True)
+        parent_subfolders = __find_all_decendent_subfolder(parent_id,current_user.id, True)
         parent_ancestors = __find_all_folder_ancestors_of_folder(
-            parent_id, indict=True)
+            parent_id,current_user.id, indict=True)
         child_subfolders = __find_all_decendent_subfolder(
-            child_folder_id, True)
+            child_folder_id,current_user.id, True)
         child_ancestors = __find_all_folder_ancestors_of_folder(
-            child_folder_id, indict=True)
+            child_folder_id,current_user.id, indict=True)
 
         if any(its_included(collection, child_folder_id, 'id') for collection in [parent_subfolders, parent_ancestors]) or \
            any(its_included(collection, parent_id, 'id') for collection in [child_subfolders, child_ancestors]):
@@ -320,7 +319,7 @@ def handle_folder_inclusion(data, current_user, parent_folder, name, parent_id, 
             msg.update(
                 {'message': 'A new <Folder> requires a <name> Folder Name'})
             return None
-        
+
         print(f'in   -------> in else 444444', current_user.id)
         print(f'in   -------> in else 444444', name)
         new_folder = Folder(foldername=name, owner_id=current_user.id)
@@ -337,9 +336,9 @@ def fx_repair(obj, type):
     return obj
 
 
-def get_child_subfolders(folder_id: int, indict=False) -> list[dict[str, Union[FolderFxS, Folder]]]:
+def get_child_subfolders(folder_id: int, current_user_id, indict=False) -> list[dict[str, Union[FolderFxS, Folder]]]:
     subfolders: list[FolderFxS] = FolderFxS.query.filter_by(
-        parent_id=folder_id, type='Folder').all()
+        parent_id=folder_id, type='Folder', owner_id=current_user_id).all()
     subfolders_list = []
     for subfolder in subfolders:
         if indict:
@@ -352,9 +351,9 @@ def get_child_subfolders(folder_id: int, indict=False) -> list[dict[str, Union[F
     return subfolders_list
 
 
-def get_child_texts(folder_id: int, indict=False) -> list[dict[str, Union[FolderFxS, Text]]]:
+def get_child_texts(folder_id: int, current_user_id, indict=False) -> list[dict[str, Union[FolderFxS, Text]]]:
     texts_fxs: list[FolderFxS] = FolderFxS.query.filter_by(
-        parent_id=folder_id, type='Text').all()
+        parent_id=folder_id, type='Text',owner_id=current_user_id).all()
     texts = []
     for textfx in texts_fxs:
         if indict:
@@ -365,10 +364,13 @@ def get_child_texts(folder_id: int, indict=False) -> list[dict[str, Union[Folder
     return texts
 
 
-def get_child_files(folder_id: int, indict=False) -> list[dict[str, Union[FolderFxS, File]]]:
-    files_fxs: list[FolderFxS] = FolderFxS.query.filter_by(
-        parent_id=folder_id, type='File').all()
+def get_child_files(folder_id: int,current_user_id,indict=False) -> list[dict[str, Union[FolderFxS, File]]]:
+    print("mmmmmmmm>>",folder_id, f'user id =>{current_user_id}')
+    
+    files_fxs = FolderFxS.query.filter_by(
+        parent_id=folder_id, type='File', owner_id=current_user_id).all()
     files = []
+    print("hhhhhhhhh>", files_fxs)
     for filesfx in files_fxs:
         if indict:
             obj = {'fx': filesfx.to_dict(), **
@@ -379,15 +381,16 @@ def get_child_files(folder_id: int, indict=False) -> list[dict[str, Union[Folder
     return files
 
 
-def get_all_children(folder: Folder, indict=False) -> dict[str, List[dict[str, Folder | File | Text | FolderFxS]]]:
+def get_all_children(folder: Folder,current_user_id, indict=False) -> dict[str, List[dict[str, Folder | File | Text | FolderFxS]]]:
     """Get all files, texts, and subfolders of a folder."""
-    files = get_child_files(folder.id, indict)
-    texts = get_child_texts(folder.id, indict)
-    folders = get_child_subfolders(folder.id, indict)
+    print("hereeeeee")
+    files = get_child_files(folder.id,current_user_id, indict)
+    texts = get_child_texts(folder.id,current_user_id, indict)
+    folders = get_child_subfolders(folder.id,current_user_id, indict)
     return {'files': files, 'texts': texts, "sub_folders": folders}
 
 
-def __find_all_folder_ancestors_of_folder(folder_id: int, seen_folders=None, indict=False) -> List[Dict[str, Union[FolderFxS, Folder]]]:
+def __find_all_folder_ancestors_of_folder(folder_id: int, current_user_id, seen_folders=None, indict=False) -> List[Dict[str, Union[FolderFxS, Folder]]]:
     if seen_folders is None:
         seen_folders = set()
     # Avoid circular references by tracking seen folders
@@ -395,7 +398,7 @@ def __find_all_folder_ancestors_of_folder(folder_id: int, seen_folders=None, ind
         return []
     seen_folders.add(folder_id)
     # Find all FolderFxS entries that reference this folder_id
-    folder_fxs_entries = FolderFxS.query.filter_by(folder_id=folder_id).all()
+    folder_fxs_entries = FolderFxS.query.filter_by(folder_id=folder_id, owner_id=current_user_id).all()
     if not folder_fxs_entries:
         # Base case: No references found
         return []
@@ -405,7 +408,7 @@ def __find_all_folder_ancestors_of_folder(folder_id: int, seen_folders=None, ind
             continue  # Skip if there's no parent
         # Get the parent folder
         parent_folder = Folder.query.filter_by(
-            id=folder_fxs_entry.parent_id).first()
+            id=folder_fxs_entry.parent_id, owner_id=current_user_id).first()
         if parent_folder is None:
             continue  # Skip if parent folder is not found
         # Recursively get all parent folders
@@ -429,15 +432,15 @@ def its_included(collection, item_id, field_name='id'):
     return False
 
 
-def get_folder_tree(folder_id):
+def get_folder_tree(folder_id, current_user_id):
     folder = Folder.query.get_or_404(folder_id)
     # Get the immediate subfolders, texts, files
     subfoldersfxs = FolderFxS.query.filter_by(
-        parent_id=folder_id, type='Folder').all()
+        parent_id=folder_id, type='Folder', owner_id=current_user_id).all()
     textsfxs = FolderFxS.query.filter_by(
-        parent_id=folder_id, type='Text').all()
+        parent_id=folder_id, type='Text', owner_id=current_user_id).all()
     filesfxs = FolderFxS.query.filter_by(
-        parent_id=folder_id, type='File').all()
+        parent_id=folder_id, type='File', owner_id=current_user_id).all()
 
     subfolders = [
         fx_repair({'fx': subfolder.to_dict(), **
@@ -463,7 +466,7 @@ def get_folder_tree(folder_id):
 
     # Recursively add subfolders to the children
     for subfolder in subfolders:
-        subfolder_tree = get_folder_tree(subfolder['id'])
+        subfolder_tree = get_folder_tree(subfolder['id'], current_user_id)
         folder_structure['children'].append(subfolder_tree)
     return folder_structure
 
@@ -484,12 +487,12 @@ def find_tree_child_by_name(folder_structure, name, type):
     return None
 
 
-def handle_text_exclusion(fxs: FolderFxS):
+def handle_text_exclusion(fxs: FolderFxS, current_user_id):
     """Handle the exclusion of a text."""
     text: Text = Text.query.get_or_404(fxs.text_id)
     # Check if the text is only referenced once
     is_not_referenced = FolderFxS.query.filter_by(
-        text_id=fxs.text_id).count() == 1
+        text_id=fxs.text_id, owner_id=current_user_id).count() == 1
 
     # If the text is not public and not referenced elsewhere, delete it
     if is_not_referenced and text.private:
@@ -505,29 +508,29 @@ def handle_file_exclusion(fxs: FolderFxS):
     db.session.delete(fxs)
 
 
-def handle_folder_exclusion(fxs: FolderFxS):
+def handle_folder_exclusion(fxs: FolderFxS, current_user_id):
     """Handle the exclusion of a folder and its contents."""
     folder: Folder = Folder.query.get_or_404(fxs.folder_id)
 
     # Check how many parents the folder has
-    parent_count = FolderFxS.query.filter_by(folder_id=folder.id).count()
+    parent_count = FolderFxS.query.filter_by(folder_id=folder.id, owner_id=current_user_id).count()
 
     if parent_count > 1:
         # Folder has other parents, just remove the FolderFxS entry
         db.session.delete(fxs)
     else:
         # Only has the current parent; need to delete the folder and its contents recursively
-        remove_folder_and_contents(folder)
+        remove_folder_and_contents(folder,current_user_id)
         db.session.delete(fxs)
 
 
-def remove_folder_and_contents(folder: Folder):
+def remove_folder_and_contents(folder: Folder,current_user_id):
     """Recursively remove a folder and its contents, ensuring no other parent references."""
     subfolders = FolderFxS.query.filter_by(
         parent_id=folder.id, type='Folder').all()
-    files = FolderFxS.query.filter_by(parent_id=folder.id, type='File').all()
-    texts = FolderFxS.query.filter_by(parent_id=folder.id, type='Text').all()
-
+    files = FolderFxS.query.filter_by(parent_id=folder.id, type='File', owner_id=current_user_id).all()
+    texts = FolderFxS.query.filter_by(parent_id=folder.id, type='Text', owner_id=current_user_id).all()
+    print(f'')
     # Delete subfolders
     for subfolder_fxs in subfolders:
         subfolder = Folder.query.get_or_404(subfolder_fxs.folder_id)
@@ -535,13 +538,13 @@ def remove_folder_and_contents(folder: Folder):
             folder_id=subfolder.id).count()
 
         if parent_count == 1:
-            remove_folder_and_contents(subfolder)
+            remove_folder_and_contents(subfolder, current_user_id)
         db.session.delete(subfolder_fxs)
 
     # Delete files
     for file_fxs in files:
         file = File.query.get_or_404(file_fxs.file_id)
-        parent_count = FolderFxS.query.filter_by(file_id=file.id).count()
+        parent_count = FolderFxS.query.filter_by(file_id=file.id, owner_id=current_user_id).count()
 
         if parent_count == 1:
             db.session.delete(file)
@@ -550,7 +553,7 @@ def remove_folder_and_contents(folder: Folder):
     # Delete texts
     for text_fxs in texts:
         text = Text.query.get_or_404(text_fxs.text_id)
-        parent_count = FolderFxS.query.filter_by(text_id=text.id).count()
+        parent_count = FolderFxS.query.filter_by(text_id=text.id, owner_id=current_user_id).count()
 
         if parent_count == 1 and text.private:
             db.session.delete(text)
@@ -560,17 +563,15 @@ def remove_folder_and_contents(folder: Folder):
     db.session.delete(folder)
 
 
-def add_folder_to_zip(zip_file, folder, base_path=''):
+def add_folder_to_zip(zip_file, folder_id,current_user_id, base_path=''):
     # Get all files and texts in the folder
-    files_objs = get_child_files(folder.id)
-    texts = get_child_texts(folder.id)
-
+    files_objs = get_child_files(folder_id, current_user_id)
+    texts = get_child_texts(folder_id, current_user_id)
     # Add files to the zip
     for file in files_objs:
         file_path = os.path.join(base_path, file['file'].filename)
         # Assuming File model has a binary content field for file data
         zip_file.writestr(file_path, file['file'].data)
-
     # Add texts to the zip (if they are to be included)
     for text in texts:
         text_path = os.path.join(
@@ -579,7 +580,7 @@ def add_folder_to_zip(zip_file, folder, base_path=''):
         zip_file.writestr(text_path, text['text'].content)
 
     # Recursively add subfolders
-    subfolders = get_child_subfolders(folder.id)
+    subfolders = get_child_subfolders(folder_id,current_user_id)
     for subfolder in subfolders:
-        add_folder_to_zip(zip_file, subfolder['folder'], os.path.join(
+        add_folder_to_zip(zip_file, subfolder['folder'], current_user_id, os.path.join(
             base_path, subfolder['folder'].foldername))

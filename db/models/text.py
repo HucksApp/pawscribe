@@ -24,7 +24,7 @@ class Text(Base):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     file_type = db.Column(db.String(20), nullable=False)
-    hash = db.Column(db.String(64), unique=True, nullable=False)
+    hash = db.Column(db.String(64),  nullable=False)
     owner_id = db.Column(db.String(36), db.ForeignKey(User.id), nullable=False)
     file_id = db.Column(db.Integer, db.ForeignKey(File.id), nullable=True)
     private = db.Column(db.Boolean, default=True)

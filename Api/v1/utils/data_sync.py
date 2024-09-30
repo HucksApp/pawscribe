@@ -49,7 +49,6 @@ def handle_touch_command(command, user_id) -> str | None:
     filename = parts[-1] if not is_script else parts[-2] if len(
         parts) == 3 else unique_name()
     content = "#!/bin/bash\n" if is_script else None
-    print("-----> command", command)
     # Create file or script in the database
     if is_script:
         container_info = container_manager.active_containers.get(user_id)
@@ -61,15 +60,12 @@ def handle_touch_command(command, user_id) -> str | None:
         folder_fxs = FolderFxS(name=filename, type='Text',
                                text_id=text.id, owner_id=user_id, parent_id=None)
     else:
-        print("filename===>",filename )
         path_folders = filename.strip().split('/')
         filename = path_folders.pop()
-        print("filename===>",filename )
         blank_data = "".encode('utf-8')
         file_hash = File.generate_hash(blank_data)
         existing_blank: File = File.query.filter_by(hash=file_hash).first()
         file = None
-        print("existing blank ====>", existing_blank)
         if existing_blank:
             file = existing_blank
         else:
@@ -77,18 +73,14 @@ def handle_touch_command(command, user_id) -> str | None:
             db.session.add(file)
             db.session.commit()
         cwd_foldername = None
-        print("path===>", path_folders)
         if len(path_folders) > 0:
             cwd_foldername = path_folders.pop()
         else:
             container_info = container_manager.active_containers.get(user_id)
             cwd_foldername = os.path.basename(container_info['cwd'])
-            print("cwd folder", cwd_foldername)
-            print("cwd folder", cwd_foldername)
 
         parent_folder = Folder.query.filter_by(
             owner_id=user_id, foldername=cwd_foldername).first()
-        print("parent ====>",parent_folder.id)
         folder_fxs = FolderFxS(name=filename, type='File', file_id=file.id,
                                owner_id=user_id, parent_id=parent_folder.id)
     db.session.add(folder_fxs)
@@ -125,45 +117,28 @@ def handle_move_or_copy_command(command, user_id):
 
     dest_name = os.path.basename(destination_path)
     dest_parent_dir = os.path.dirname(destination_path).split('/').pop()
-    print(f'source path =============> {source_path} \n')
-    print(f'dest path =============> {destination_path} \n')
-    print(f'src parent dir =============> {src_parent_dir} \n')
-    print(f'src name =============> {src_name} \n')
-    print(f'src parent dir =============> {src_parent_dir} \n')
-    print(f'dest name =============> {dest_name} \n')
-    print(f'dest parent dir =============> {dest_parent_dir} \n')
-    print(f'cwd =============> {cwd} \n')
 
-    
     # Fetch parent folders from DB
     src_parent_folder = Folder.query.filter_by(
         owner_id=user_id, foldername=src_parent_dir).first()
     dest_parent_folder = Folder.query.filter_by(
-        owner_id=user_id, foldername=dest_parent_dir).first()
+        owner_id=user_id, foldername=dest_name).first()
 
     folder_fxs = FolderFxS.query.filter_by(
         name=src_name, parent_id=src_parent_folder.id, owner_id=user_id).first()
-    
-    print(f'src parent folder =============> {src_parent_folder} \n')
-    print(f'dest parent folder =============> {dest_parent_folder} \n')
-    print(f'folder fxs =============> {folder_fxs.to_dict()} \n')
 
     if folder_fxs:
         if operation == 'mv':
             folder_fxs.parent_id = dest_parent_folder.id
-            folder_fxs.name = dest_name
             db.session.commit()
-            print(f'folder fxs =============> {folder_fxs.to_dict()} \n')
         elif operation == 'cp':
-            new_folder_fxs = FolderFxS(name=dest_name, type=folder_fxs.type,
+            new_folder_fxs = FolderFxS(name=src_name, type=folder_fxs.type,
                                        text_id=folder_fxs.text_id, file_id=folder_fxs.file_id,
                                        folder_id=folder_fxs.folder_id, owner_id=user_id,
                                        parent_id=dest_parent_folder.id)
             db.session.add(new_folder_fxs)
             db.session.commit()
-        print(f'returning command \n')
         return command
-    print(f'returning None \n')
     return None
 
 
@@ -186,12 +161,9 @@ def handle_mkdir_command(command, user_id) -> str | None:
 
     # Resolve the path relative to the current directory
     target_path = resolve_path(cwd, foldername)
-    print("=======>",target_path)
     # Extract the folder name from the resolved path
     name = os.path.basename(target_path)
     parent_dir = os.path.dirname(target_path).split('/').pop()
-    #print("target path=======>",parent_dir, " file name=====>", name)
-    #print("base dir", os.path.dirname(parent_di))
     # Create the folder in the DB and the filesystem (as needed)
     folder = Folder(foldername=name, description=None,
                     language=None, owner_id=user_id)
@@ -205,11 +177,50 @@ def handle_mkdir_command(command, user_id) -> str | None:
     if parent_folder:
         # Link the new folder to its parent in FolderFxS
         folder_fxs = FolderFxS(name=name, type='Folder', folder_id=folder.id,
-                            owner_id=user_id, parent_id=parent_folder.id)
+                               owner_id=user_id, parent_id=parent_folder.id)
         db.session.add(folder_fxs)
         db.session.commit()
 
     return command if folder_fxs else None
+
+
+def handle_rm_command(command, user_id):
+    """
+    Handle the rm command to remove files or folders.
+
+    Parameters:
+    - command (str): The command string containing the operation and paths.
+    - user_id (str): The ID of the user executing the command.
+
+    Returns:
+    - str | None: The original command if successful; None otherwise.
+    """
+    parts = command.split()
+    target = parts[1]  # The file or folder to be deleted
+
+    container_info = container_manager.active_containers.get(user_id)
+    cwd = container_info['cwd']
+
+    # Resolve the full path of the target file/folder
+    target_path = resolve_path(cwd, target)
+    target_name = os.path.basename(target_path)
+    parent_dir = os.path.dirname(target_path).split('/').pop()
+
+    # Fetch the parent folder from the database
+    parent_folder = Folder.query.filter_by(
+        owner_id=user_id, foldername=parent_dir).first()
+
+    if parent_folder:
+        # Try to locate the file or folder in the FolderFxS model
+        folder_fxs = FolderFxS.query.filter_by(
+            name=target_name, parent_id=parent_folder.id, owner_id=user_id).first()
+
+        if folder_fxs:
+            # Remove the associated entry from FolderFxS and the database
+            db.session.delete(folder_fxs)
+            db.session.commit()
+            return command
+    return None
 
 
 def resolve_path(current_path, target_path):
@@ -225,6 +236,3 @@ def resolve_path(current_path, target_path):
     - str: The resolved absolute path.
     """
     return os.path.normpath(os.path.join(current_path, target_path))
-
-def handle_rm_command(command, user_id):
-    pass

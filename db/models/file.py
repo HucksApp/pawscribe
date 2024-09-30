@@ -23,7 +23,7 @@ class File(Base):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(256), unique=True, nullable=False)
     data = db.Column(db.LargeBinary(length=(2**32)-1), nullable=False)
-    hash = db.Column(db.String(64), unique=True, nullable=False)
+    hash = db.Column(db.String(64), nullable=False)
     owner_id = db.Column(db.String(36), db.ForeignKey(User.id), nullable=False)
     private = db.Column(db.Boolean, default=True)
     shared_with_key = db.Column(db.String(128), nullable=True)

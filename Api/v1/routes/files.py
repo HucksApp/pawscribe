@@ -247,36 +247,36 @@ def download_file(current_user, file_id):
     )
 
 
-@files_bp.route('/edit/<int:file_id>', methods=['GET'])
-@token_required
-def edit_file(current_user, file_id):
-    """
-    Edit the content of a file by its ID.
+# @files_bp.route('/edit/<int:file_id>', methods=['GET'])
+# @token_required
+# def edit_file(current_user, file_id):
+#     """
+#     Edit the content of a file by its ID.
 
-    - Only the owner can edit the file
-    - Returns file metadata and content for editing
+#     - Only the owner can edit the file
+#     - Returns file metadata and content for editing
 
-    :param current_user: The current authenticated user from the token
-    :param file_id: The ID of the file to edit
-    :return: JSON with file content and metadata
-    """
-    msg = {"message": "", "valid": False}
-    file: File = File.query.get_or_404(file_id)
+#     :param current_user: The current authenticated user from the token
+#     :param file_id: The ID of the file to edit
+#     :return: JSON with file content and metadata
+#     """
+#     msg = {"message": "", "valid": False}
+#     file: File = File.query.get_or_404(file_id)
 
-    if file:
-        if current_user.id != file.owner_id:
-            msg.update({'message': 'Permission denied'})
-            return jsonify(msg), 403
+#     if file:
+#         if current_user.id != file.owner_id:
+#             msg.update({'message': 'Permission denied'})
+#             return jsonify(msg), 403
 
-        # Return file content and metadata for editing
-        content = BytesIO(file.data).read().decode("utf-8")
-        file_info = file.to_dict()
-        msg.update({**file_info, 'message': 'success',
-                   "content": content, "valid": True})
-        return jsonify(msg), 200
+#         # Return file content and metadata for editing
+#         content = BytesIO(file.data).read().decode("utf-8")
+#         file_info = file.to_dict()
+#         msg.update({**file_info, 'message': 'success',
+#                    "content": content, "valid": True})
+#         return jsonify(msg), 200
 
-    msg.update({"message": "File not found"})
-    return jsonify(msg), 404
+#     msg.update({"message": "File not found"})
+#     return jsonify(msg), 404
 
 
 @files_bp.route('/save', methods=['POST'])
@@ -299,33 +299,41 @@ def handle_save_file(current_user):
     file_id = data.get('file_id') if 'file_id' in data else None
 
     # Generate a hash for the file content to prevent duplicates
-    file_hash = File.generate_text_hash(content)
-    existing_file = File.query.filter_by(hash=file_hash).first()
-
-    if existing_file:
-        msg.update({'message': 'File already exists',
+    content_bytes = content.encode('utf-8')
+    file_hash = File.generate_hash(content_bytes)
+    existing_file = File.query.filter_by(
+        hash=file_hash, owner_id=current_user.id).first()
+    file = None
+    if file_id:
+        file = File.query.get_or_404(file_id)
+    if existing_file and file_id != existing_file.id:
+        msg.update({'message': f'Files Content Dublication is not allowed. This File exists :id: {existing_file.id}:',
                    'file_id': existing_file.id})
         return jsonify(msg), 409
 
-    # Update an existing file or create a new one
-    if file_id:
-        file: File = File.query.get_or_404(file_id)
-        if file:
-            if file.owner_id != current_user.id:
-                msg.update({'message': 'Permission denied'})
-                return jsonify(msg), 403
-            file.data = content
+    if file:
+        if file.owner_id != current_user.id:
+            msg.update({'message': 'Permission denied'})
+            return jsonify(msg), 403
+        if file_hash == file.hash:
+            msg.update({'message': 'No Changes to save'})
+            return jsonify(msg), 403
+        else:
+            file.data = content_bytes
+            file.hash = file_hash
+            db.session.commit()
+
     else:
         file_name = unique_name(filename=file_name)
-        new_file = File(
+        file = File(
             filename=file_name,
-            data=content,
+            data=content_bytes,
             owner_id=current_user.id
         )
-        db.session.add(new_file)
+        db.session.add(file)
 
     db.session.commit()
-    msg.update({'message': 'File saved', 'valid': True, "file_id": new_file.id})
+    msg.update({'message': 'File saved', 'valid': True, "file_id": file.id})
     return jsonify(msg), 200
 
 

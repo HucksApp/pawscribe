@@ -3,6 +3,8 @@ import datetime
 from flask import Blueprint, request, jsonify
 from db.models.user import User
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies
+from ..utils.required import token_required
+from ..store.manager import container_manager
 
 # Blueprint for authentication-related routes
 auth_bp = Blueprint('auth', __name__)
@@ -48,7 +50,9 @@ def login():
 
 
 @auth_bp.route('/logout', methods=['POST', 'GET'])
-def logout():
+@token_required
+def logout(current_user):
+
     """
     User logout route that clears the JWT token from cookies.
 
@@ -59,5 +63,7 @@ def logout():
     :return: JSON response confirming the user has been logged out.
     """
     response = jsonify({"message": "Logged out successfully", "valid": True})
+
     unset_jwt_cookies(response)  # Clear the JWT token from cookies
+    container_manager.cleanup_existing_docker_containers(current_user.id) 
     return response, 200  # Return success response
