@@ -31,11 +31,11 @@ $ cd pawscribe
 ```
 
 ## General Workflow
-* Authentication: The user logs in to access their files and folders.
-* Folder & File Navigation: The user can create folders, scripts and files, arrange them in a hierarchy, and navigate the structure.
-* File Upload/Creation: Files and scripts can be uploaded or created within folders.
-* Content Sync: Every file or script has an associated content hash. When the user makes changes, the system checks whether the hash has changed. If no other parent references the file, it updates the file; otherwise, it creates a new version and links it.
-* Save & Sync: The app syncs changes to the back-end. If changes are detected, the back-end decides whether to update the existing file/script or to create a new one.
-* Hash Matching & Version Control: The system checks hashes to ensure the content's integrity and manages changes for multiple references of the same content.
-* Collaborative Editing: When multiple users are editing the same file/script, changes are merged and saved based on hash differences.
+* **Authentication:** The user logs in to access their files and folders.
+* **Folder & File Navigation:** The user can create folders, scripts and files, arrange them in a hierarchy, and navigate the structure.
+* **File Upload/Creation:** Files and scripts can be uploaded or created within folders.
+* **Content Sync:** Every file or script has an associated content hash. When the user makes changes, the system checks whether the hash has changed. If no other parent references the file, it updates the file; otherwise, it creates a new version and links it.
+* **Save & Sync:** The app syncs changes to the back-end. If changes are detected, the back-end decides whether to update the existing file/script or to create a new one.
+* **Hash Matching & Version Control:** The system checks hashes to ensure the content's integrity and manages changes for multiple references of the same content.
+* **Collaborative Editing:** When multiple users are editing the same file/script, changes are merged and saved based on hash differences.
 
