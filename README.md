@@ -22,41 +22,30 @@ Pawscribe is a robust, real-time text and file collaboration application built w
 ## Project Structure
 
 ```plaintext
-Pawscribe/
-├── api/
-│   ├── __init__.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   ├── file.py
-│   │   ├── folder.py
-│   │   └── text.py
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── files.py
-│   │   └── text.py
-│   ├── utils/
-│   │   └── hashing.py
-│   └── app.py
-├─
-├── static/
-│   ├── css/
-│   │   └── styles.css
-│   ├── js/
-│   │   ├── collaborate.js
-│   │   ├── index.js
-│   │   └── login.js
-├── templates/
-│   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── collaborate.html
-│   └── shared_files.html
-├── .env
-├── config.py
-├── requirements.txt
-└── README.md
+/Pawscribe
+│
+├── /api                     # Contains all the routes and API endpoints
+│   ├── /auth.py             # Handles authentication (login, JWT tokens, etc.)
+│   ├── /folders.py          # Folder management routes (create, delete, list folders)
+│   ├── /files.py            # File management routes (upload, sync, etc.)
+│   ├── /sync.py             # Sync-related routes to handle hash checking and content updates
+│   └── ...
+│
+├── /db
+|   |── /models                  # SQLAlchemy models representing the database schema
+│       ├── /folder.py           # Folder model
+│       ├── /file.py             # File model
+│       ├── /user.py             # User model (for authentication)
+│       └── ...
+│
+├── /services                # Business logic and helper functions for the app
+│   ├── /hash_service.py     # Helper functions for handling hash generation and checking
+│   ├── /file_service.py     # Logic for file upload, sync, and version control
+│   └── ...
+│
+├── /config.py               # Application configuration (DB connection, JWT settings, etc.)
+│
+└── README.md                # Backend-specific README
 ```
 
 
