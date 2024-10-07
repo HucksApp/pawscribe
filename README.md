@@ -23,8 +23,8 @@ Multiple users can see and edit code in real Time. View project and all it's con
 JWT-based authentication secures user access to different sections of the app.
 
 ## Reference  
-* 🎥 📽 [Youtube demo](https://www.youtube.com/watch?v=6JbJsOSW1fM "pawscribe")
-* 🎥 📽 [other demo](https://www.flexclip.com/share/694478929b9c352b019f1d0c0ec1f27c7cdfab8.html "pawscribe")
+* 🎥 [Youtube demo](https://www.youtube.com/watch?v=6JbJsOSW1fM "pawscribe")
+* 🎥 [other demo](https://www.flexclip.com/share/694478929b9c352b019f1d0c0ec1f27c7cdfab8.html "pawscribe")
 
 ## Installation  ⬇️
 ```
