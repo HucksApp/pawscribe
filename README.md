@@ -13,7 +13,7 @@ Pawscribe is a Document management, Sofware Development and collaboration Tool
 Users can create folders, add files, scripts and manage their hierarchy.
 ### ⏱⏳ Real-time Synchronization
 Files and text scripts sync changes in real-time across users, ensuring version control.
-### #️⃣(📃) 🔀 🛢 Hash-based Content Validation
+### #️⃣(📃)🔀🛢 Hash-based Content Validation
 Every file and script content is hashed, and any content changes are identified by hash differences.
 ### 📑 🛠 Software Development Tool  
 Integrated Development enviroment with features like full user controlled code editor, Terminal ........
