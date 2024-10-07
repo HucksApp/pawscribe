@@ -5,8 +5,8 @@
 ## Overview 📖
 The main branch serves as the core repository for the Pawscribe project.
 Pawscribe is a Document management, Sofware Development and collaboration Tool
-### [pawscribe -> backend #️⃣🛠⚙️](https://github.com/HucksApp/pawscribe/tree/pawscribe "backend") : Handles the server-side logic, API routes, socket routes, session management, database management, containers, data syncronizing.
-### [pawscribe_client -> frontend 🛠📲](https://github.com/HucksApp/pawscribe/tree/pawscribe_client "frontend") : Manages the user interface, document presentation, software development, collaboration tools (IDE).
+### [🛠⚙️ pawscribe -> backend](https://github.com/HucksApp/pawscribe/tree/pawscribe "backend") : Handles the server-side logic, API routes, socket routes, session management, database management, containers, data syncronizing.
+### [🛠📲 pawscribe_client -> frontend](https://github.com/HucksApp/pawscribe/tree/pawscribe_client "frontend") : Manages the user interface, document presentation, software development, collaboration tools (IDE).
 
 ## Key Features 📋
 ### 📄 📁 File, Script & Folder Management
