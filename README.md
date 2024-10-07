@@ -1,25 +1,24 @@
-# Pawscribe
-
+# Pawscribe (Backend)
 Pawscribe is a robust, real-time Document, Project/Software development, Management and collaboration application built with Flask, Flask-Blueprint, Socket.IO, and JWT for authentication. It provides features such as file and script sharing, folder management, software development,  collaboration with live updates, and more.
 
-## Features
-###  Restful
-  - User Authentication with JWT
+## 🧰 Features
+###  Restful 🎮
+  - User Authentication with JWT 🔏 
   - File Upload and Management
   - Script Creation and management
   - Folder Creation and Management
   - Script and File Sharing with Private and Public Access
-### Socket.IO
+### Socket.IO  🎞 ⇢ 🔌 ⇠ 🎞
   - Folder, Files, Script, and data content creation
   - Folder, Files, Script, and data content mutation
   - Folder, Files, Script, and data content deletion
   - Folder, Files, Script, and data content synchronizing with database storage
   - Project Docker Container for Code and Command execution
 
-### Hash-based Duplicate Detection for Files and Scripts
-### MySQL Database Integration For Production and Sqlite for Development
+### Hash-based Duplicate Detection for Files and Scripts #️⃣(📃) 🔀 🗃
+### MySQL Database Integration For Production and Sqlite for Development 🛢🔄
 
-## Technology Stack
+## Technology Stack 📚
 - CORE: Flask, Flask-Blueprint
 - ORM: Flask-SQLAlchemy
 - Transport: Flask-Restful, Flask-SocketIO
@@ -27,7 +26,7 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 - Database: MySQL, SQLite
 - Others: hashlib, Docker, OS
 
-## Project Structure
+## ⛩ Project Structure
 
 ```plaintext
 📁/Pawscribe/
@@ -89,35 +88,5 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 
 
 
-Setup and Installation
-Clone the Repository
-
-git clone https://github.com/yourusername/Pawscribe.git
-cd Pawscribe
 
 
-Usage
-Authentication
-Register a new user at /register
-Login at /login
-File and Folder Management
-Upload files and create folders at /
-Real-time Collaboration
-Collaborate on text documents in real-time at /collaborate
-Sharing
-Share files and text documents via generated URLs
-API Endpoints
-Auth Routes
-
-POST /api/v1/auth/login
-POST /api/v1/auth/register
-File Routes
-
-POST /api/v1/files/upload
-GET /api/v1/files/download/<file_id>
-DELETE /api/v1/files/<file_id>
-Text Routes
-
-POST /api/v1/text/create
-GET /api/v1/text/<text_id>
-DELETE /api/v1/text/<text_id>
