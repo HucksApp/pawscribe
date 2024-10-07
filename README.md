@@ -19,7 +19,7 @@ Every file and script content is hashed, and any content changes are identified 
 Integrated Development enviroment with features like full user controlled code editor, Terminal ........
 ### 👩‍👧‍👧 📝 Collaborative Coding and Editing 
 Multiple users can see and edit code in real Time. View project and all it's content files
-### 🔐🔏 User Authentication 
+### 🔐 User Authentication 
 JWT-based authentication secures user access to different sections of the app.
 
 ## Reference  
@@ -39,7 +39,7 @@ $ cd pawscribe
 ```
 
 ## General Workflow 🛠 ⇢ ⇢
-### 🔐 Authentication 
+### 🔏 Authentication 
 The user logs in to access their files and folders.
 ### ⬅️⬆️⬇️➡️ Folder Script & File Navigation 
 The user can create folders, scripts and files, arrange them in a hierarchy, and navigate the structure.
@@ -49,7 +49,7 @@ Files and scripts can be uploaded or created within folders.
 Every file or script has an associated content hash. When the user makes changes, the system checks whether the hash has changed. If no other parent references the file, it updates the file; otherwise, it creates a new version and links it.
 ### 🛢🔄 Save & Sync
 The app syncs changes to the back-end. If changes are detected, the back-end decides whether to update the existing file/script or to create a new one.
-### Hash Matching & Version Control #️⃣(📃) 🔀 🗃
+### #️⃣(📃) 🔀 🗃 Hash Matching & Version Control
 The system checks hashes to ensure the content's integrity and manages changes for multiple references of the same content.
 ### 👩‍👧‍👧 📝 Collaborative Coding and Editing
 When multiple users are editing the same file/script, changes are merged and saved based on hash differences.
