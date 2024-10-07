@@ -8,9 +8,9 @@ Pawscribe is a dynamic, real-time document, project/software development, and co
 * Interactive Code and Script Editor
 * Integrated Development Enviroment (IDE)
 ### API Integration 🚀
-Connects with the Pawscribe API (Backend)
-Folder, Files, and Script Synchronization
-WebSocket and HTTP Communication for Real-time data creation and mutation.
+- Connects with the Pawscribe API (Backend)
+- Folder, Files, and Script Synchronization
+- WebSocket and HTTP Communication for Real-time data creation and mutation.
 ### Frontend Technology Stack 📚
 * Framework: React.js
 * State Management: Redux
