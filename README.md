@@ -1,23 +1,27 @@
 # Pawscribe
 
-Pawscribe is a robust, real-time text and file collaboration application built with Flask, Socket.IO, and JWT for authentication. It provides features such as file sharing, folder management, text collaboration with live updates, and more.
+Pawscribe is a robust, real-time Document, Project/Software development, Management and collaboration application built with Flask, Flask-Blueprint, Socket.IO, and JWT for authentication. It provides features such as file and script sharing, folder management, software development,  collaboration with live updates, and more.
 
 ## Features
+###  Restful
+  - User Authentication with JWT
+  - File Upload and Management, Restful
+  - Script Creation and management
+  - Folder Creation and Management
+  - Script and File Sharing with Private and Public Access
+### Socket.IO
+  - Real-time project/software (Folder, Files, Script, and data content) creation, mutation and synchronizing with database storage
 
-- User Authentication with JWT
-- File Upload and Management
-- Folder Creation and Management
-- Real-time Text Collaboration with Socket.IO
-- Text and File Sharing with Private and Public Access
-- Hash-based Duplicate Detection for Files and Texts
-- MySQL Database Integration
+### Hash-based Duplicate Detection for Files and Scripts
+### MySQL Database Integration For Production and Sqlite for Development
 
 ## Technology Stack
-
-- Backend: Flask, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-SocketIO
-- Frontend: HTML5, CSS3, JavaScript (ES6)
-- Database: MySQL
-- Other: Socket.IO for real-time collaboration, Python hashlib for hashing
+- CORE: Flask, Flask-Blueprint
+- ORM: Flask-SQLAlchemy
+- Transport: Flask-Restful, Flask-SocketIO
+- Authentication: Flask-JWT-Extended
+- Database: MySQL, SQLite
+- Others: hashlib, Docker, OS
 
 ## Project Structure
 
