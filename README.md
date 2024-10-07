@@ -5,12 +5,16 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 ## Features
 ###  Restful
   - User Authentication with JWT
-  - File Upload and Management, Restful
+  - File Upload and Management
   - Script Creation and management
   - Folder Creation and Management
   - Script and File Sharing with Private and Public Access
 ### Socket.IO
-  - Real-time project/software (Folder, Files, Script, and data content) creation, mutation and synchronizing with database storage
+  - Folder, Files, Script, and data content creation
+  - Folder, Files, Script, and data content mutation
+  - Folder, Files, Script, and data content deletion
+  - Folder, Files, Script, and data content synchronizing with database storage
+  - Project Docker Container for Code and Command execution
 
 ### Hash-based Duplicate Detection for Files and Scripts
 ### MySQL Database Integration For Production and Sqlite for Development
