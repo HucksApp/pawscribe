@@ -90,7 +90,7 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 ## Installation ⬇️
 ```
 
-$ git clone --single-branch --branch pawscribe_client https://github.com/HucksApp/pawscribe.git
+$ git clone --single-branch --branch pawscribe https://github.com/HucksApp/pawscribe.git
 $ cd pawscribe
 $ npm install
 $ npm start
