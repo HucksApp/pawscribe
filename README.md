@@ -59,7 +59,7 @@ Pawscribe is a dynamic, real-time document, project/software development, and co
 ├──📄 /package.json                           # Project dependencies and scripts
 ├──📄 /package-lock.json                      # Lock file for exact package versions
 ├──📄 /init.sh                                # Script for project setup and environment configuration
-└──📄 /config-overrides.js                    # Configuration overrides for Webpack (if used)
+└──📄 /config-overrides.js                    # Configuration overrides for Webpack
 
 ```
 
