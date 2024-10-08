@@ -41,7 +41,7 @@ Pawscribe is a dynamic, real-time document, project/software development, and co
 │     │     └──📄 /transport.js               # socket transport funtion
 │     ├──📁 /store/                           # State and cache data management
 │     │     ├──📄 /cache.js                   # cache data management
-│     │     ├──📄 /store.js                   # Main application entry point
+│     │     ├──📄 /store.js                   # Redux Store
 │     │     ├──📄 /queue.js                   # Cache data management for unsave(backend) data persistency
 │     │     ├──📄 /fileBlobSlice.js           # file data Blob slice
 │     │     ├──📄 /fileSlice.js               # file data slice
