@@ -21,7 +21,7 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 ## Technology Stack 📚
 - CORE: Flask, Flask-Blueprint
 - ORM: Flask-SQLAlchemy
-- Transport: Flask-Restful, Flask-SocketIO
+- Transport: Flask-Rest, Flask-SocketIO
 - Authentication: Flask-JWT-Extended
 - Database: MySQL, SQLite
 - Others: hashlib, Docker, OS
