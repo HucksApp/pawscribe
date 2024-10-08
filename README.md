@@ -80,7 +80,7 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 ├──📄 /docker.sh                              # Docker setup
 ├──📄 /init.sh                                # Application all configuration and all installation script
 ├──📄 /install.sh                             # application  pre and post requirement installation script
-├──📄 /refresh.sh                             # remove app aches and development related caches
+├──📄 /refresh.sh                             # remove app caches and development related caches
 ├──📄 /run.py                                 # Main App Entry Point
 ├──📄 /requirements.txt                       # Libraries and Dependencies
 └──📄 /README.md                              # Backend-specific README
