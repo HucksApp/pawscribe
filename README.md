@@ -92,8 +92,8 @@ Pawscribe is a robust, real-time Document, Project/Software development, Managem
 
 $ git clone --single-branch --branch pawscribe https://github.com/HucksApp/pawscribe.git
 $ cd pawscribe
-$ python3 -m venv $(pwd)/.venv    # create project enviroment 📦   
-$ source $(pwd)/bin/activate      # activate enviroment
+$ python3 -m venv $(pwd)/.venv    # create server enviroment 📦   
+$ source $(pwd)/bin/activate      # activate server app enviroment
 $ ./init.sh                       # install all dependencies and create needed setups 🗳
 $ python3 run.py                  # start server
 
