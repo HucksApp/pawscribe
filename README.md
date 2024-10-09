@@ -1,4 +1,4 @@
-# 🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾
+# 🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾
 #  Pawscribe
 ![PAWSCRIBE](https://github.com/HucksApp/pawscribe/blob/pawscribe_client/src/images/back5.svg "Title is optional")
 
@@ -65,4 +65,4 @@ Aremu Mohammad Abiodun ~ [Github](https://github.com/Hucksapp) : [Twitter](https
 ## License ©
 Public Domain. No copy write protection. 
 
-# 🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾
+# 🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾 🐾🐾 🐾
